@@ -1,0 +1,67 @@
+name: macOS
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: "macOS Latest ${{matrix.compiler}} ${{matrix.build_type}} ${{matrix.sanitizer}}Sanitizer"
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        compiler: [clang, gcc]
+        build_type: [Debug, Release]
+        sanitizer: [Address, UB]
+        include:
+          - compiler: clang
+            cc: clang
+            cxx: clang++
+            packages: llvm@15
+          - compiler: gcc
+            cc: gcc-13
+            cxx: g++-13
+            packages: gcc@13
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Install
+      run: |
+        brew install ${{matrix.packages}} cmake ninja
+        ${{matrix.cc}} --version
+        ${{matrix.cxx}} --version
+        cmake --version
+        ninja --version
+        cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure
+      env:
+        CC: ${{matrix.cc}}
+        CXX: ${{matrix.cxx}}
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DSANITIZER=${{matrix.sanitizer}} -G "Ninja" -S "${{github.workspace}}"
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        threads=`sysctl -n hw.logicalcpu`
+        cmake --build . --config ${{matrix.build_type}} --parallel $threads
+
+    - name: Test
+      env:
+        ASAN_OPTIONS: check_initialization_order=1:detect_stack_use_after_return=1
+        CTEST_OUTPUT_ON_FAILURE: 1
+        UBSAN_OPTIONS: print_stacktrace=1
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        threads=`sysctl -n hw.logicalcpu`
+        ctest --build-config ${{matrix.build_type}} --output-on-failure --parallel $threads

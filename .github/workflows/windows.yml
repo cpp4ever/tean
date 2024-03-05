@@ -1,0 +1,50 @@
+name: Windows
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: "Windows Latest ${{matrix.platform}} ${{matrix.toolset}} ${{matrix.build_type}}"
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+        platform: [Win32, x64]
+        toolset: [v143, ClangCL]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+  
+    - name: Install
+      run: |
+        choco install cmake
+        cmake --version
+        cmake -E make_directory ${{runner.workspace}}/build
+
+    - name: Configure
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        cmake -A ${{matrix.platform}} -T ${{matrix.toolset}} -DSANITIZER= -S "${{github.workspace}}"
+
+    - name: Build
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        $threads = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+        cmake --build . --config ${{matrix.build_type}} --parallel $threads
+
+    - name: Test
+      env:
+        CTEST_OUTPUT_ON_FAILURE: 1
+      working-directory: ${{runner.workspace}}/build
+      run: |
+        $threads = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+        ctest --build-config ${{matrix.build_type}} --output-on-failure --parallel $threads
