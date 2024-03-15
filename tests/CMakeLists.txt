@@ -23,97 +23,50 @@
    SOFTWARE.
 ]]
 
-include(${TEAN_PROJECT_SOURCE_DIR}/thirdparty/googletest.cmake)
-include(${TEAN_PROJECT_SOURCE_DIR}/thirdparty/ta-lib.cmake)
-include(${TEAN_PROJECT_SOURCE_DIR}/thirdparty/tulipindicators.cmake)
-
-function(set_target_sanitizer TARGET SANITIZER)
-   string(TOLOWER "${SANITIZER}" sanitizer)
-   if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-      if(sanitizer STREQUAL "address")
-         set_target_properties(
-            ${TARGET}
-            PROPERTIES
-               MSVC_DEBUG_INFORMATION_FORMAT ProgramDatabase
-               MSVC_RUNTIME_LIBRARY MultiThreadedDLL
-         )
-         target_compile_options(${TARGET} PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:/fsanitize=address /Oy- /Zi>)
-         target_link_options(${TARGET} PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:/INCREMENTAL:NO>)
-      else()
-         message(FATAL_ERROR "Unknown ${CMAKE_CXX_COMPILER_ID} sanitizer: ${SANITIZER}")
-      endif()
-   elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(AppleClang|Clang)$")
-      if(sanitizer STREQUAL "address")
-         target_compile_options(
-            ${TARGET}
-            PRIVATE
-               $<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize-address-use-after-return=always>
-               $<$<CXX_COMPILER_ID:Clang>:-fsanitize=leak>
-         )
-         target_link_options(
-            ${TARGET}
-            PRIVATE
-               $<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer -fno-optimize-sibling-calls -fsanitize=address -fsanitize-address-use-after-return=always>
-               $<$<CXX_COMPILER_ID:Clang>:-fsanitize=leak>
-         )
-      elseif(sanitizer STREQUAL "ub")
-         target_compile_options(
-            ${TARGET}
-            PRIVATE
-               $<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer -fsanitize=float-divide-by-zero -fsanitize=integer -fsanitize=undefined>
-         )
-         target_link_options(
-            ${TARGET}
-            PRIVATE
-               $<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer -fsanitize=float-divide-by-zero -fsanitize=integer -fsanitize=undefined>
-         )
-      else()
-         message(FATAL_ERROR "Unknown ${CMAKE_CXX_COMPILER_ID} sanitizer: ${SANITIZER}")
-      endif()
-   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      if(sanitizer STREQUAL "address")
-         target_compile_options(${TARGET} PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer -fsanitize=address -fsanitize=leak>)
-         target_link_options(${TARGET} PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer -fsanitize=address -fsanitize=leak>)
-      elseif(sanitizer STREQUAL "ub")
-         target_compile_options(${TARGET} PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer -fsanitize=undefined>)
-         target_link_options(${TARGET} PRIVATE $<$<COMPILE_LANGUAGE:C,CXX>:-fno-omit-frame-pointer -fsanitize=undefined>)
-      else()
-         message(FATAL_ERROR "Unknown ${CMAKE_CXX_COMPILER_ID} sanitizer: ${SANITIZER}")
-      endif()
-   endif()
-endfunction()
-
-if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
-   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-      set(SANITIZER "Address" CACHE STRING "Choose sanitizer for the build")
-      set_property(CACHE SANITIZER PROPERTY STRINGS "Address;")
-   endif()
-elseif(CMAKE_CXX_COMPILER_ID MATCHES "^(AppleClang|Clang|GNU)$")
-   set(SANITIZER "Address" CACHE STRING "Choose sanitizer for the build")
-   set_property(CACHE SANITIZER PROPERTY STRINGS "Address;UB;")
-endif()
+include("${TEAN_PROJECT_SOURCE_DIR}/thirdparty/CMakeSanitizer.cmake")
+include("${TEAN_PROJECT_SOURCE_DIR}/thirdparty/googletest.cmake")
+include("${TEAN_PROJECT_SOURCE_DIR}/thirdparty/ta-lib.cmake")
+include("${TEAN_PROJECT_SOURCE_DIR}/thirdparty/tulipindicators.cmake")
 
 file(GLOB_RECURSE TEAN_TESTS_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
 file(GLOB_RECURSE TEAN_TESTS_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 set(
    TEAN_TESTS_THIRDPARTY
+   "${TEAN_PROJECT_SOURCE_DIR}/thirdparty/CMakeSanitizer.cmake"
    "${TEAN_PROJECT_SOURCE_DIR}/thirdparty/googletest.cmake"
    "${TEAN_PROJECT_SOURCE_DIR}/thirdparty/ta-lib.cmake"
    "${TEAN_PROJECT_SOURCE_DIR}/thirdparty/tulipindicators.cmake"
 )
 add_executable(tests ${TEAN_TESTS_HEADERS} ${TEAN_TESTS_SOURCES} ${TEAN_TESTS_THIRDPARTY})
 add_executable(tean::tests ALIAS tests)
-if(NOT "${SANITIZER}" STREQUAL "")
-   set_target_sanitizer(gmock_main ${SANITIZER})
-   set_target_sanitizer(ta_lib_static ${SANITIZER})
-   set_target_sanitizer(tean ${SANITIZER})
-   set_target_sanitizer(tests ${SANITIZER})
-   set_target_sanitizer(tulipindicators ${SANITIZER})
-endif()
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/" FILES ${TEAN_TESTS_HEADERS} ${TEAN_TESTS_SOURCES})
 source_group(TREE "${TEAN_PROJECT_SOURCE_DIR}/" FILES ${TEAN_TESTS_THIRDPARTY})
 target_include_directories(tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 target_link_libraries(tests PRIVATE gmock_main ta_lib_static tean tulipindicators)
+available_cxx_sanitizers(CXX_SANITIZERS)
+list(LENGTH CXX_SANITIZERS CXX_SANITIZERS_LENGTH)
+if(CXX_SANITIZERS_LENGTH GREATER 0)
+   list(GET CXX_SANITIZERS 0 DEFAULT_CXX_SANITIZER)
+   set(SANITIZER ${DEFAULT_CXX_SANITIZER} CACHE STRING "Choose sanitizer for the build")
+   set_property(CACHE SANITIZER PROPERTY STRINGS ${CXX_SANITIZERS})
+   if(SANITIZER STREQUAL "UBSan")
+      target_cxx_ubsan(
+         tests
+         FLAGS
+            print_suppressions=true
+            print_stacktrace=true
+            report_error_type=true
+            silence_unsigned_overflow=true
+      )
+   else()
+      target_cxx_sanitizer(tests ${SANITIZER})
+   endif()
+endif()
+get_filename_component(CXX_LINKER_DIRECTORY ${CMAKE_LINKER} DIRECTORY)
+string(LENGTH "${CXX_LINKER_DIRECTORY}" CXX_LINKER_DIRECTORY_LENGTH)
+if(CXX_LINKER_DIRECTORY_LENGTH GREATER 0)
+   set(TEAN_CTEST_PROPERTIES ENVIRONMENT "PATH=${CXX_LINKER_DIRECTORY};$ENV{PATH}")
+endif()
 
 include(GoogleTest)
 gtest_discover_tests(tests PROPERTIES ${TEAN_CTEST_PROPERTIES})

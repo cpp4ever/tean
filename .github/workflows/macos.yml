@@ -11,13 +11,13 @@ permissions:
 
 jobs:
   build:
-    name: "macOS Latest ${{matrix.compiler}} ${{matrix.build_type}} ${{matrix.sanitizer}}Sanitizer"
+    name: "macOS Latest ${{matrix.compiler}} ${{matrix.build_type}} ${{matrix.sanitizer}}"
     runs-on: macos-latest
     strategy:
       matrix:
         compiler: [clang, gcc]
         build_type: [Debug, Release]
-        sanitizer: [Address, UB]
+        sanitizer: [ASan, TSan, UBSan]
         include:
           - compiler: clang
             cc: clang
@@ -27,6 +27,9 @@ jobs:
             cc: gcc-13
             cxx: g++-13
             packages: gcc@13
+        exclude:
+          - compiler: gcc
+            sanitizer: TSan
 
     steps:
     - uses: actions/checkout@v4
@@ -54,13 +57,11 @@ jobs:
       working-directory: ${{runner.workspace}}/build
       run: |
         threads=`sysctl -n hw.logicalcpu`
-        cmake --build . --config ${{matrix.build_type}} --parallel $threads
+        cmake --build . --config ${{matrix.build_type}} --parallel $threads --target tests
 
     - name: Test
       env:
-        ASAN_OPTIONS: check_initialization_order=1:detect_stack_use_after_return=1
         CTEST_OUTPUT_ON_FAILURE: 1
-        UBSAN_OPTIONS: print_stacktrace=1
       working-directory: ${{runner.workspace}}/build
       run: |
         threads=`sysctl -n hw.logicalcpu`
