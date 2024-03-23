@@ -30,7 +30,7 @@ FetchContent_Declare(
    # Download Step Options
    GIT_PROGRESS ON
    GIT_REMOTE_UPDATE_STRATEGY CHECKOUT
-   GIT_REPOSITORY https://github.com/cpp4ever/ta-lib.git
+   GIT_REPOSITORY https://github.com/TA-Lib/ta-lib.git
    GIT_SHALLOW ON
    GIT_SUBMODULES_RECURSE ON
    GIT_TAG main
