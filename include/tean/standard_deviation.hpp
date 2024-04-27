@@ -51,10 +51,9 @@ public:
       return variance_to_standard_deviation(inSequenceNumber, m_variance.calc(inSequenceNumber, inValue));
    }
 
-   [[maybe_unused, nodiscard]] double calc(uint64_t const inSequenceNumber, double const inValue, double &outVariance) noexcept
+   [[maybe_unused, nodiscard]] double calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
    {
-      outVariance = m_variance.calc(inSequenceNumber, inValue);
-      return variance_to_standard_deviation(inSequenceNumber, outVariance);
+      return variance_to_standard_deviation(inSequenceNumber, m_variance.calc(inSequenceNumber, inValue, outMean));
    }
 
    [[maybe_unused, nodiscard]] uint32_t lookback_period() const noexcept
@@ -72,10 +71,9 @@ public:
       return variance_to_standard_deviation(inSequenceNumber, m_variance.pick(inSequenceNumber, inValue));
    }
 
-   [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue, double &outVariance) const noexcept
+   [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
    {
-      outVariance = m_variance.pick(inSequenceNumber, inValue);
-      return variance_to_standard_deviation(inSequenceNumber, outVariance);
+      return variance_to_standard_deviation(inSequenceNumber, m_variance.pick(inSequenceNumber, inValue, outMean));
    }
 
    [[maybe_unused]] void reset() noexcept

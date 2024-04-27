@@ -27,8 +27,9 @@
 
 #include <algorithm> /// for std::fill
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for int32_t, uint32_t, uint64_t
+#include <limits> /// for std::numeric_limits
 #include <memory> /// for std::make_unique
 
 namespace tean
@@ -54,10 +55,10 @@ linear_regression::linear_regression(uint32_t const inPeriod) :
    m_lookbackPeriod(inPeriod - 1),
    m_sumX(period_to_sum_x(inPeriod)),
    m_divisor(period_to_sum_x(inPeriod) * period_to_sum_x(inPeriod) - static_cast<double>(inPeriod) * period_to_sum_square_x(inPeriod)),
-   m_yValues(std::make_unique<double[]>(inPeriod))
 #if (not defined(NDEBUG))
-   , m_prevSequenceNumber(0)
+   m_prevSequenceNumber(0),
 #endif
+   m_yValues(std::make_unique<double[]>(inPeriod))
 {
    assert(1 < period());
    std::fill(m_yValues.get(), m_yValues.get() + period(), 0.0);
@@ -69,21 +70,26 @@ linear_regression::result_type linear_regression::calc(uint64_t const inSequence
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
    m_yValues[inSequenceNumber % period()] = inValue;
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
       return do_calc(inSequenceNumber);
    }
-   return result_type{};
+   return result_type
+   {
+      .intercept = std::numeric_limits<double>::quiet_NaN(),
+      .slope = std::numeric_limits<double>::quiet_NaN(),
+   };
 }
 
 void linear_regression::reset() noexcept
 {
-   std::fill(m_yValues.get(), m_yValues.get() + period(), 0.0);
 #if (not defined(NDEBUG))
    m_prevSequenceNumber = 0;
 #endif
+   std::fill(m_yValues.get(), m_yValues.get() + period(), 0.0);
 }
 
 linear_regression::result_type linear_regression::do_calc(uint64_t const inSequenceNumber) noexcept

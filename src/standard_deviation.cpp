@@ -26,7 +26,7 @@
 #include "tean/standard_deviation.hpp" /// for tean::standard_deviation
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan, std::sqrt
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint64_t
 #include <limits> /// for std::numeric_limits
 
@@ -37,6 +37,7 @@ double standard_deviation::variance_to_standard_deviation(uint64_t const inSeque
 {
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
+      assert(true == std::isfinite(inVariance));
       assert(false == std::isnan(inVariance));
       return (0.0 >= inVariance) ? 0.0 : std::sqrt(inVariance);
    }

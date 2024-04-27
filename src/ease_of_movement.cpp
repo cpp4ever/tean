@@ -26,6 +26,7 @@
 #include "tean/ease_of_movement.hpp" /// for tean::ease_of_movement
 
 #include <cassert> /// for assert
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint64_t
 #include <limits> /// for std::numeric_limits
 
@@ -38,6 +39,12 @@ double ease_of_movement::calc(uint64_t const inSequenceNumber, double const inHi
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inHigh));
+   assert(false == std::isnan(inHigh));
+   assert(true == std::isfinite(inLow));
+   assert(false == std::isnan(inLow));
+   assert(true == std::isfinite(inVolume));
+   assert(false == std::isnan(inVolume));
    assert(inHigh >= inLow);
    assert(0.0 <= inVolume);
    auto emv = std::numeric_limits<double>::quiet_NaN();
@@ -45,9 +52,9 @@ double ease_of_movement::calc(uint64_t const inSequenceNumber, double const inHi
    if (0 < inSequenceNumber) [[likely]]
    {
       auto const boxRatio = inVolume / 10000.0 / (inHigh - inLow);
-      emv = (mean - m_lastMean) / boxRatio;
+      emv = (mean - m_mean) / boxRatio;
    }
-   m_lastMean = mean;
+   m_mean = mean;
    return emv;
 }
 
@@ -56,13 +63,19 @@ double ease_of_movement::pick(uint64_t const inSequenceNumber, double const inHi
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
+   assert(true == std::isfinite(inHigh));
+   assert(false == std::isnan(inHigh));
+   assert(true == std::isfinite(inLow));
+   assert(false == std::isnan(inLow));
+   assert(true == std::isfinite(inVolume));
+   assert(false == std::isnan(inVolume));
    assert(inHigh >= inLow);
    assert(0.0 <= inVolume);
    if (0 < inSequenceNumber) [[likely]]
    {
       auto const mean = (inHigh + inLow) * 0.5;
       auto const boxRatio = inVolume / 10000.0 / (inHigh - inLow);
-      return (mean - m_lastMean) / boxRatio;
+      return (mean - m_mean) / boxRatio;
    }
    return std::numeric_limits<double>::quiet_NaN();
 }

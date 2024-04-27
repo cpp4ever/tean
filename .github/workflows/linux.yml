@@ -2,21 +2,22 @@ name: Linux
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: "Ubuntu Latest ${{matrix.compiler}} ${{matrix.build_type}} ${{matrix.sanitizer}}"
-    runs-on: ubuntu-latest
+    name: "${{matrix.os}} ${{matrix.compiler}} ${{matrix.build_type}} ${{matrix.sanitizer}}"
+    runs-on: ${{matrix.os}}
     strategy:
       matrix:
         compiler: [clang, gcc]
         build_type: [Debug, Release]
+        os: [ubuntu-22.04]
         sanitizer: [ASan, LSan, MSan, TSan, UBSan]
         include:
           - compiler: clang

@@ -65,7 +65,7 @@ private:
 #if (not defined(NDEBUG))
    uint64_t m_prevSequenceNumber;
 #endif
-   double m_lastResult;
+   double m_sum;
 };
 
 }

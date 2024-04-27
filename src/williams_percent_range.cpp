@@ -27,6 +27,7 @@
 
 #include <algorithm> /// for std::fill
 #include <cassert> /// for assert
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 #include <memory> /// for std::make_unique
@@ -60,6 +61,12 @@ double williams_percent_range::calc(uint64_t const inSequenceNumber, double cons
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inHigh));
+   assert(false == std::isnan(inHigh));
+   assert(true == std::isfinite(inLow));
+   assert(false == std::isnan(inLow));
+   assert(true == std::isfinite(inClose));
+   assert(false == std::isnan(inClose));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);
@@ -75,6 +82,12 @@ double williams_percent_range::pick(uint64_t const inSequenceNumber, double cons
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
+   assert(true == std::isfinite(inHigh));
+   assert(false == std::isnan(inHigh));
+   assert(true == std::isfinite(inLow));
+   assert(false == std::isnan(inLow));
+   assert(true == std::isfinite(inClose));
+   assert(false == std::isnan(inClose));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);

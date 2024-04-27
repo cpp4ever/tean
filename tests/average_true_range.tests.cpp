@@ -27,11 +27,13 @@
 #include "tean.tests.hpp" /// for tean::tests::TeAn
 
 #include "tean/average_true_range.hpp" /// for the test target
+#include "tean/true_range.hpp" /// for tean::true_range
 
 #include <gmock/gmock.h> /// for ASSERT_THAT, testing::DoubleEq, testing::ElementsAreArray, testing::Matcher
 #include <gtest/gtest.h> /// for ASSERT_DOUBLE_EQ, ASSERT_EQ, ASSERT_FALSE, ASSERT_NO_FATAL_FAILURE, ASSERT_TRUE
 #include <ta_func.h> /// for TA_ATR, TA_ATR_Lookback, TA_FUNC_UNST_ATR, TA_SetUnstablePeriod, TA_SUCCESS
 
+#include <algorithm> /// for std::min
 #include <cmath> /// for std::isnan
 #include <cstdint> /// for int64_t, uint32_t
 #include <limits> /// for std::numeric_limits
@@ -47,6 +49,7 @@ TEST_F(TeAn, AverageTrueRange)
    constexpr uint32_t testMaxPeriod = 100;
    auto const testStep = [&] (decimal const &testPriceStep)
    {
+      auto const testPricePrecision = inverted_power_of_ten[std::min<uint32_t>(6, testPriceStep.scale)];
       auto const testPriceStepValue = static_cast<double>(testPriceStep);
       for (auto testPeriod = testMinPeriod; testPeriod <= testMaxPeriod; ++testPeriod)
       {
@@ -57,52 +60,59 @@ TEST_F(TeAn, AverageTrueRange)
          auto testHighPrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
          auto testLowPrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
          auto testClosePrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
-         for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
-         {
-            auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
-            auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-            auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
-            auto testPickAdditionalValue = 0.0;
-            auto const testPickValue = testIndicator.pick(testIteration, testHighPrice, testLowPrice, testClosePrice, testPickAdditionalValue);
-            ASSERT_TRUE(std::isnan(testPickValue));
-            auto testCalcAdditionalValue = 0.0;
-            auto const testCalcValue = testIndicator.calc(testIteration, testHighPrice, testLowPrice, testClosePrice, testCalcAdditionalValue);
-            ASSERT_TRUE(std::isnan(testCalcValue));
-            if (0 == testIteration)
-            {
-               ASSERT_TRUE(std::isnan(testPickAdditionalValue));
-               ASSERT_TRUE(std::isnan(testCalcAdditionalValue));
-            }
-            else
-            {
-               ASSERT_FALSE(std::isnan(testPickAdditionalValue));
-               ASSERT_FALSE(std::isnan(testCalcAdditionalValue));
-               ASSERT_DOUBLE_EQ(testPickAdditionalValue, testCalcAdditionalValue);
-            }
-            testHighPrices[testIteration] = testHighPrice;
-            testLowPrices[testIteration] = testLowPrice;
-            testClosePrices[testIteration] = testClosePrice;
-         }
          auto testValues = std::make_unique<testing::Matcher<double>[]>(testIterationsNumber);
-         for (uint32_t testIteration = 0; testIteration < testIterationsNumber; ++testIteration)
          {
-            auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
-            auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-            auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
-            auto testPickAdditionalValue = 0.0;
-            auto const testPickValue = testIndicator.pick(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice, testPickAdditionalValue);
-            ASSERT_FALSE(std::isnan(testPickValue));
-            ASSERT_FALSE(std::isnan(testPickAdditionalValue));
-            auto testCalcAdditionalValue = 0.0;
-            auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice, testCalcAdditionalValue);
-            ASSERT_FALSE(std::isnan(testCalcValue));
-            ASSERT_FALSE(std::isnan(testCalcAdditionalValue));
-            ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
-            ASSERT_DOUBLE_EQ(testPickAdditionalValue, testCalcAdditionalValue);
-            testHighPrices[testIndicator.lookback_period() + testIteration] = testHighPrice;
-            testLowPrices[testIndicator.lookback_period() + testIteration] = testLowPrice;
-            testClosePrices[testIndicator.lookback_period() + testIteration] = testClosePrice;
-            testValues[testIteration] = testing::DoubleEq(testCalcValue);
+            tean::true_range testAdditionalIndicator{};
+            for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
+            {
+               auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
+               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
+               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
+               auto const testAdditionalValue = testAdditionalIndicator.calc(testIteration, testHighPrice, testLowPrice, testClosePrice);
+               auto testPickAdditionalValue = 0.0;
+               auto const testPickValue = testIndicator.pick(testIteration, testHighPrice, testLowPrice, testClosePrice, testPickAdditionalValue);
+               ASSERT_TRUE(std::isnan(testPickValue));
+               auto testCalcAdditionalValue = 0.0;
+               auto const testCalcValue = testIndicator.calc(testIteration, testHighPrice, testLowPrice, testClosePrice, testCalcAdditionalValue);
+               ASSERT_TRUE(std::isnan(testCalcValue));
+               if (0 == testIteration)
+               {
+                  ASSERT_TRUE(std::isnan(testPickAdditionalValue));
+                  ASSERT_TRUE(std::isnan(testCalcAdditionalValue));
+               }
+               else
+               {
+                  ASSERT_FALSE(std::isnan(testPickAdditionalValue));
+                  ASSERT_DOUBLE_EQ(testAdditionalValue, testPickAdditionalValue);
+                  ASSERT_FALSE(std::isnan(testCalcAdditionalValue));
+                  ASSERT_DOUBLE_EQ(testAdditionalValue, testCalcAdditionalValue);
+               }
+               testHighPrices[testIteration] = testHighPrice;
+               testLowPrices[testIteration] = testLowPrice;
+               testClosePrices[testIteration] = testClosePrice;
+            }
+            for (uint32_t testIteration = 0; testIteration < testIterationsNumber; ++testIteration)
+            {
+               auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
+               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
+               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
+               auto const testAdditionalValue = testAdditionalIndicator.calc(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice);
+               auto testPickAdditionalValue = 0.0;
+               auto const testPickValue = testIndicator.pick(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice, testPickAdditionalValue);
+               ASSERT_FALSE(std::isnan(testPickAdditionalValue));
+               ASSERT_DOUBLE_EQ(testAdditionalValue, testPickAdditionalValue);
+               ASSERT_FALSE(std::isnan(testPickValue));
+               auto testCalcAdditionalValue = 0.0;
+               auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice, testCalcAdditionalValue);
+               ASSERT_FALSE(std::isnan(testCalcAdditionalValue));
+               ASSERT_DOUBLE_EQ(testAdditionalValue, testCalcAdditionalValue);
+               ASSERT_FALSE(std::isnan(testCalcValue));
+               ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
+               testHighPrices[testIndicator.lookback_period() + testIteration] = testHighPrice;
+               testLowPrices[testIndicator.lookback_period() + testIteration] = testLowPrice;
+               testClosePrices[testIndicator.lookback_period() + testIteration] = testClosePrice;
+               testValues[testIteration] = testing::DoubleNear(testCalcValue, testPricePrecision);
+            }
          }
          auto const testMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
          std::vector<double> expectedValues;
@@ -146,7 +156,7 @@ TEST_F(TeAn, AverageTrueRange)
                auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period(), testHighPrice, testLowPrice, testClosePrice);
                ASSERT_FALSE(std::isnan(testCalcValue));
                ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
-               ASSERT_DOUBLE_EQ(expectedValues[0], testCalcValue);
+               ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
             }
          }
       }

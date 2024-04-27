@@ -26,7 +26,6 @@
 #pragma once
 
 #include <cstdint> /// for uint32_t, uint64_t
-#include <limits> /// for std::numeric_limits
 #include <memory> /// for std::unique_ptr
 
 namespace tean
@@ -37,8 +36,8 @@ class [[nodiscard]] linear_regression final
 public:
    struct [[maybe_unused, nodiscard]] result_type final
    {
-      [[maybe_unused]] double intercept = std::numeric_limits<double>::quiet_NaN();
-      [[maybe_unused]] double slope = std::numeric_limits<double>::quiet_NaN();
+      [[maybe_unused]] double intercept;
+      [[maybe_unused]] double slope;
    };
 
 public:
@@ -69,10 +68,10 @@ private:
    uint32_t const m_lookbackPeriod;
    double const m_sumX;
    double const m_divisor;
-   std::unique_ptr<double[]> const m_yValues;
 #if (not defined(NDEBUG))
    uint64_t m_prevSequenceNumber;
 #endif
+   std::unique_ptr<double[]> const m_yValues;
 
    [[nodiscard]] result_type do_calc(uint64_t inSequenceNumber) noexcept;
 };

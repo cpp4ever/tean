@@ -26,7 +26,7 @@
 #include "tean/simple_moving_average.hpp" /// for tean::simple_moving_average
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint64_t
 #include <limits> /// for std::numeric_limits
 
@@ -37,6 +37,7 @@ double simple_moving_average::do_calc(uint64_t const inSequenceNumber, double co
 {
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
+      assert(true == std::isfinite(inSumOverPeriod));
       assert(false == std::isnan(inSumOverPeriod));
       return inSumOverPeriod / static_cast<double>(period());
    }
@@ -47,6 +48,7 @@ double simple_moving_average::do_pick(uint64_t const inSequenceNumber, double co
 {
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
+      assert(true == std::isfinite(inSumOverPeriod));
       assert(false == std::isnan(inSumOverPeriod));
       return inSumOverPeriod / static_cast<double>(period());
    }

@@ -26,7 +26,7 @@
 #include "tean/relative_strength_index.hpp" /// for tean::relative_strength_index
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 
@@ -51,6 +51,7 @@ double relative_strength_index::calc(uint64_t const inSequenceNumber, double con
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
    if (lookback_period() < inSequenceNumber) [[likely]]
    {
@@ -64,6 +65,7 @@ double relative_strength_index::pick(uint64_t const inSequenceNumber, double con
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
    if (lookback_period() < inSequenceNumber) [[likely]]
    {

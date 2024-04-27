@@ -26,7 +26,7 @@
 #include "tean/exponential_moving_average.hpp" /// for tean::exponential_moving_average
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 
@@ -40,8 +40,10 @@ exponential_moving_average::exponential_moving_average(uint32_t const inPeriod, 
 #if (not defined(NDEBUG))
    m_prevSequenceNumber(0),
 #endif
-   m_lastResult(0.0)
+   m_value(0.0)
 {
+   assert(true == std::isfinite(inSmoothing));
+   assert(false == std::isnan(inSmoothing));
    assert(1 < period());
 }
 
@@ -51,24 +53,25 @@ double exponential_moving_average::calc(uint64_t const inSequenceNumber, double 
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
    if (period() <= inSequenceNumber) [[likely]]
    {
-      m_lastResult += m_smoothingFactor * (inValue - m_lastResult);
+      m_value += m_smoothingFactor * (inValue - m_value);
       if (lookback_period() <= inSequenceNumber) [[likely]]
       {
-         return m_lastResult;
+         return m_value;
       }
    }
    else
    {
-      m_lastResult += inValue;
+      m_value += inValue;
       if (period() == (inSequenceNumber + 1))
       {
-         m_lastResult /= static_cast<double>(period());
+         m_value /= static_cast<double>(period());
          if (lookback_period() == inSequenceNumber)
          {
-            return m_lastResult;
+            return m_value;
          }
       }
    }
@@ -80,14 +83,15 @@ double exponential_moving_average::pick(uint64_t const inSequenceNumber, double 
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
    if ((period() <= inSequenceNumber) && (lookback_period() <= inSequenceNumber)) [[likely]]
    {
-      return m_lastResult + m_smoothingFactor * (inValue - m_lastResult);
+      return m_value + m_smoothingFactor * (inValue - m_value);
    }
    if ((period() == (inSequenceNumber + 1)) && (lookback_period() == inSequenceNumber))
    {
-      return (m_lastResult + inValue) / static_cast<double>(period());
+      return (m_value + inValue) / static_cast<double>(period());
    }
    return std::numeric_limits<double>::quiet_NaN();
 }

@@ -27,7 +27,7 @@
 
 #include <algorithm> /// for std::fill
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 #include <memory> /// for std::make_unique
@@ -51,32 +51,36 @@ variance::variance(uint32_t const inPeriod) :
 #endif
 }
 
-double variance::calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+double variance::calc(uint64_t inSequenceNumber, double inValue, double &outMean) noexcept
 {
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
-      return do_regular_calc(inSequenceNumber, inValue);
+      return do_regular_calc(inSequenceNumber, inValue, outMean);
    }
+   outMean = std::numeric_limits<double>::quiet_NaN();
    return do_lookback_calc(inSequenceNumber, inValue);
 }
 
-double variance::pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
+double variance::pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
 {
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
-      auto const mean = (m_sum + inValue) / static_cast<double>(period());
+      outMean = (m_sum + inValue) / static_cast<double>(period());
       auto const meanOfSquares = (m_sumOfSquares + inValue * inValue) / static_cast<double>(period());
-      return meanOfSquares - mean * mean;
+      return meanOfSquares - outMean * outMean;
    }
+   outMean = std::numeric_limits<double>::quiet_NaN();
    return std::numeric_limits<double>::quiet_NaN();
 }
 
@@ -98,17 +102,17 @@ double variance::do_lookback_calc(uint64_t const inSequenceNumber, double const 
    return std::numeric_limits<double>::quiet_NaN();
 }
 
-double variance::do_regular_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+double variance::do_regular_calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
 {
    m_sum += inValue;
    m_sumOfSquares += inValue * inValue;
-   auto const mean = m_sum / static_cast<double>(period());
+   outMean = m_sum / static_cast<double>(period());
    auto const meanOfSquares = m_sumOfSquares / static_cast<double>(period());
    auto &prevValue = m_values[inSequenceNumber % lookback_period()];
    m_sum -= prevValue;
    m_sumOfSquares -= prevValue * prevValue;
    prevValue = inValue;
-   return meanOfSquares - mean * mean;
+   return meanOfSquares - outMean * outMean;
 }
 
 }

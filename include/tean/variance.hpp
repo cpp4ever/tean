@@ -42,7 +42,13 @@ public:
    variance &operator = (variance &&) = delete;
    variance &operator = (variance const &) = delete;
 
-   [[nodiscard]] double calc(uint64_t inSequenceNumber, double inValue) noexcept;
+   [[maybe_unused, nodiscard]] double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+   {
+      double mean;
+      return calc(inSequenceNumber, inValue, mean);
+   }
+
+   [[nodiscard]] double calc(uint64_t inSequenceNumber, double inValue, double &outMean) noexcept;
 
    [[maybe_unused, nodiscard]] uint32_t lookback_period() const noexcept
    {
@@ -54,7 +60,13 @@ public:
       return m_period;
    }
 
-   [[nodiscard]] double pick(uint64_t inSequenceNumber, double inValue) const noexcept;
+   [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
+   {
+      double mean;
+      return pick(inSequenceNumber, inValue, mean);
+   }
+
+   [[nodiscard]] double pick(uint64_t inSequenceNumber, double inValue, double &outMean) const noexcept;
 
    void reset() noexcept;
 
@@ -70,7 +82,7 @@ private:
 
    [[nodiscard]] double do_lookback_calc(uint64_t inSequenceNumber, double inValue) noexcept;
 
-   [[nodiscard]] double do_regular_calc(uint64_t inSequenceNumber, double inValue) noexcept;
+   [[nodiscard]] double do_regular_calc(uint64_t inSequenceNumber, double inValue, double &outMean) noexcept;
 };
 
 }

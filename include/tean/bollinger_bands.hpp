@@ -28,7 +28,7 @@
 #include "tean/standard_deviation.hpp" /// for tean::standard_deviation
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 #include <type_traits> /// for std::is_constructible_v
@@ -60,6 +60,10 @@ public:
       m_standardDeviation(inPeriod),
       m_movingAverage(inPeriod, std::forward<types>(inValues)...)
    {
+      assert(true == std::isfinite(m_upperBandMultiplier));
+      assert(false == std::isnan(m_upperBandMultiplier));
+      assert(true == std::isfinite(m_lowerBandMultiplier));
+      assert(false == std::isnan(m_lowerBandMultiplier));
       assert(m_standardDeviation.period() == m_movingAverage.period());
       assert(m_standardDeviation.lookback_period() <= m_movingAverage.lookback_period());
    }
@@ -103,7 +107,9 @@ private:
    {
       if (m_movingAverage.lookback_period() <= inSequenceNumber) [[likely]]
       {
+         assert(true == std::isfinite(inStandardDeviation));
          assert(false == std::isnan(inStandardDeviation));
+         assert(true == std::isfinite(inMovingAverage));
          assert(false == std::isnan(inMovingAverage));
          return result_type
          {

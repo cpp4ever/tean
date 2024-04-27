@@ -37,7 +37,7 @@ public:
 #if (not defined(NDEBUG))
       m_prevSequenceNumber(0),
 #endif
-      m_lastMean(0.0)
+      m_mean(0.0)
    {}
 
    ease_of_movement(ease_of_movement &&) = delete;
@@ -60,14 +60,14 @@ public:
 #if (not defined(NDEBUG))
       m_prevSequenceNumber = 0;
 #endif
-      m_lastMean = 0.0;
+      m_mean = 0.0;
    }
 
 private:
 #if (not defined(NDEBUG))
    uint64_t m_prevSequenceNumber;
 #endif
-   double m_lastMean;
+   double m_mean;
 };
 
 }

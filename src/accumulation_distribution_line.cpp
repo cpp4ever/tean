@@ -26,6 +26,7 @@
 #include "tean/accumulation_distribution_line.hpp" /// for tean::accumulation_distribution_line
 
 #include <cassert> /// for assert
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint64_t
 
 namespace tean
@@ -37,6 +38,14 @@ double accumulation_distribution_line::calc([[maybe_unused]] uint64_t const inSe
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inHigh));
+   assert(false == std::isnan(inHigh));
+   assert(true == std::isfinite(inLow));
+   assert(false == std::isnan(inLow));
+   assert(true == std::isfinite(inClose));
+   assert(false == std::isnan(inClose));
+   assert(true == std::isfinite(inVolume));
+   assert(false == std::isnan(inVolume));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);
@@ -44,9 +53,12 @@ double accumulation_distribution_line::calc([[maybe_unused]] uint64_t const inSe
    auto const body = inHigh - inLow;
    if (0.0 < body)
    {
-      m_lastResult += inVolume * ((inClose - inLow) - (inHigh - inClose)) / body;
+      auto const value = inVolume * ((inClose - inLow) - (inHigh - inClose)) / body;
+      assert(true == std::isfinite(value));
+      assert(false == std::isnan(value));
+      m_value += value;
    }
-   return m_lastResult;
+   return m_value;
 }
 
 double accumulation_distribution_line::pick([[maybe_unused]] uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inClose, double const inVolume) const noexcept
@@ -54,12 +66,27 @@ double accumulation_distribution_line::pick([[maybe_unused]] uint64_t const inSe
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
+   assert(true == std::isfinite(inHigh));
+   assert(false == std::isnan(inHigh));
+   assert(true == std::isfinite(inLow));
+   assert(false == std::isnan(inLow));
+   assert(true == std::isfinite(inClose));
+   assert(false == std::isnan(inClose));
+   assert(true == std::isfinite(inVolume));
+   assert(false == std::isnan(inVolume));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);
    assert(0.0 <= inVolume);
    auto const body = inHigh - inLow;
-   return (0.0 < body) ? (m_lastResult + inVolume * ((inClose - inLow) - (inHigh - inClose)) / body) : m_lastResult;
+   if (0.0 < body)
+   {
+      auto const value = inVolume * ((inClose - inLow) - (inHigh - inClose)) / body;
+      assert(true == std::isfinite(value));
+      assert(false == std::isnan(value));
+      return m_value + value;
+   }
+   return m_value;
 }
 
 }

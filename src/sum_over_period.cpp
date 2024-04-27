@@ -27,7 +27,7 @@
 
 #include <algorithm> /// for std::fill
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 #include <memory> /// for std::make_unique
@@ -42,7 +42,7 @@ sum_over_period::sum_over_period(uint32_t const inPeriod) :
 #if (not defined(NDEBUG))
    m_prevSequenceNumber(0),
 #endif
-   m_lastResult(0.0)
+   m_sum(0.0)
 {
    assert(1 < period());
    std::fill(m_values.get(), m_values.get() + period(), 0.0);
@@ -54,11 +54,12 @@ double sum_over_period::calc(uint64_t const inSequenceNumber, double const inVal
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
    auto &prevValue = m_values[inSequenceNumber % period()];
-   m_lastResult += inValue - prevValue;
+   m_sum += inValue - prevValue;
    prevValue = inValue;
-   return m_lastResult;
+   return m_sum;
 }
 
 double sum_over_period::pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
@@ -66,8 +67,9 @@ double sum_over_period::pick(uint64_t const inSequenceNumber, double const inVal
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
+   assert(true == std::isfinite(inValue));
    assert(false == std::isnan(inValue));
-   return inValue - m_values[inSequenceNumber % period()] + m_lastResult;
+   return inValue - m_values[inSequenceNumber % period()] + m_sum;
 }
 
 void sum_over_period::reset() noexcept
@@ -76,7 +78,7 @@ void sum_over_period::reset() noexcept
 #if (not defined(NDEBUG))
    m_prevSequenceNumber = 0;
 #endif
-   m_lastResult = 0.0;
+   m_sum = 0.0;
 }
 
 }

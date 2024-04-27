@@ -27,7 +27,7 @@
 #include "tean/true_range.hpp" /// for tean::true_range
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 
@@ -38,7 +38,7 @@ average_true_range::average_true_range(uint32_t const inPeriod, uint32_t const i
    m_period(inPeriod),
    m_lookbackPeriod(inUntrustedPeriod + inPeriod),
    m_trueRange(),
-   m_lastResult(0.0)
+   m_value(0.0)
 {
    assert(m_trueRange.lookback_period() < period());
 }
@@ -47,24 +47,25 @@ double average_true_range::do_calc(uint64_t const inSequenceNumber, double const
 {
    if (m_trueRange.lookback_period() <= inSequenceNumber) [[likely]]
    {
+      assert(true == std::isfinite(inTrueRange));
       assert(false == std::isnan(inTrueRange));
       if (period() < inSequenceNumber) [[likely]]
       {
-         m_lastResult = (m_lastResult * static_cast<double>(period() - 1) + inTrueRange) / static_cast<double>(period());
+         m_value = (m_value * static_cast<double>(period() - 1) + inTrueRange) / static_cast<double>(period());
          if (lookback_period() <= inSequenceNumber) [[likely]]
          {
-            return m_lastResult;
+            return m_value;
          }
       }
       else
       {
-         m_lastResult += inTrueRange;
+         m_value += inTrueRange;
          if (period() == inSequenceNumber) [[unlikely]]
          {
-            m_lastResult /= static_cast<double>(period());
+            m_value /= static_cast<double>(period());
             if (lookback_period() == inSequenceNumber)
             {
-               return m_lastResult;
+               return m_value;
             }
          }
       }
@@ -80,13 +81,14 @@ double average_true_range::do_pick(uint64_t const inSequenceNumber, double const
 {
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
+      assert(true == std::isfinite(inTrueRange));
       assert(false == std::isnan(inTrueRange));
       if (period() < inSequenceNumber) [[likely]]
       {
-         return (m_lastResult * static_cast<double>(period() - 1) + inTrueRange) / static_cast<double>(period());
+         return (m_value * static_cast<double>(period() - 1) + inTrueRange) / static_cast<double>(period());
       }
       assert(period() == lookback_period());
-      return (m_lastResult + inTrueRange) / static_cast<double>(period());
+      return (m_value + inTrueRange) / static_cast<double>(period());
    }
    return std::numeric_limits<double>::quiet_NaN();
 }

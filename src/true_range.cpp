@@ -27,6 +27,7 @@
 
 #include <algorithm> /// for std::max
 #include <cassert> /// for assert
+#include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint64_t
 #include <cstdlib> /// for std::abs
 #include <limits> /// for std::numeric_limits
@@ -40,11 +41,17 @@ double true_range::calc(uint64_t const inSequenceNumber, double const inHigh, do
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
+   assert(true == std::isfinite(inHigh));
+   assert(false == std::isnan(inHigh));
+   assert(true == std::isfinite(inLow));
+   assert(false == std::isnan(inLow));
+   assert(true == std::isfinite(inClose));
+   assert(false == std::isnan(inClose));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);
    auto const result = do_pick(inSequenceNumber, inHigh, inLow);
-   m_lastClose = inClose;
+   m_close = inClose;
    return result;
 }
 
@@ -53,6 +60,12 @@ double true_range::pick(uint64_t const inSequenceNumber, double const inHigh, do
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
+   assert(true == std::isfinite(inHigh));
+   assert(false == std::isnan(inHigh));
+   assert(true == std::isfinite(inLow));
+   assert(false == std::isnan(inLow));
+   assert(true == std::isfinite(inClose));
+   assert(false == std::isnan(inClose));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);
@@ -66,8 +79,8 @@ double true_range::do_pick(uint64_t const inSequenceNumber, double const inHigh,
       return std::max(
          {
             inHigh - inLow,
-            std::abs(inHigh - m_lastClose),
-            std::abs(inLow - m_lastClose),
+            std::abs(inHigh - m_close),
+            std::abs(inLow - m_close),
          }
       );
    }

@@ -2,21 +2,22 @@ name: macOS
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: "macOS Latest ${{matrix.compiler}} ${{matrix.build_type}} ${{matrix.sanitizer}}"
-    runs-on: macos-latest
+    name: "${{matrix.os}} ${{matrix.compiler}} ${{matrix.build_type}} ${{matrix.sanitizer}}"
+    runs-on: ${{matrix.os}}
     strategy:
       matrix:
         compiler: [clang, gcc]
         build_type: [Debug, Release]
+        os: [macos-12, macos-13, macos-14]
         sanitizer: [ASan, TSan, UBSan]
         include:
           - compiler: clang
@@ -30,6 +31,10 @@ jobs:
         exclude:
           - compiler: gcc
             sanitizer: TSan
+          - os: macos-13
+            compiler: gcc
+          - os: macos-14
+            compiler: gcc
 
     steps:
     - uses: actions/checkout@v4

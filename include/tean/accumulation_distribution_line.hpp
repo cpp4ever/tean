@@ -37,7 +37,7 @@ public:
 #if (not defined(NDEBUG))
       m_prevSequenceNumber(0),
 #endif
-      m_lastResult(0.0)
+      m_value(0.0)
    {}
 
    accumulation_distribution_line(accumulation_distribution_line &&) = delete;
@@ -55,14 +55,14 @@ public:
 #if (not defined(NDEBUG))
       m_prevSequenceNumber = 0;
 #endif
-      m_lastResult = 0.0;
+      m_value = 0.0;
    }
 
 private:
 #if (not defined(NDEBUG))
    uint64_t m_prevSequenceNumber;
 #endif
-   double m_lastResult;
+   double m_value;
 };
 
 }

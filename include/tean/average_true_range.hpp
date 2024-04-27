@@ -78,14 +78,14 @@ public:
    [[maybe_unused]] void reset() noexcept
    {
       m_trueRange.reset();
-      m_lastResult = 0.0;
+      m_value = 0.0;
    }
 
 private:
    uint32_t const m_period;
    uint32_t const m_lookbackPeriod;
    true_range m_trueRange;
-   double m_lastResult;
+   double m_value;
 
    [[nodiscard]] double do_calc(uint64_t inSequenceNumber, double inTrueRange) noexcept;
 

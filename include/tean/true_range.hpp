@@ -37,7 +37,7 @@ public:
 #if (not defined(NDEBUG))
       m_prevSequenceNumber(0),
 #endif
-      m_lastClose(0.0)
+      m_close(0.0)
    {}
 
    true_range(true_range &&) = delete;
@@ -60,14 +60,14 @@ public:
 #if (not defined(NDEBUG))
       m_prevSequenceNumber = 0;
 #endif
-      m_lastClose = 0.0;
+      m_close = 0.0;
    }
 
 private:
 #if (not defined(NDEBUG))
    uint64_t m_prevSequenceNumber;
 #endif
-   double m_lastClose;
+   double m_close;
 
    [[nodiscard]] double do_pick(uint64_t inSequenceNumber, double inHigh, double inLow) const noexcept;
 };
