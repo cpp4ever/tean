@@ -46,9 +46,9 @@ TEST_F(TeAn, LinearRegression)
 {
    constexpr uint32_t testMinPeriod = 2;
    constexpr uint32_t testMaxPeriod = 100;
-   constexpr auto testPricePrecision = inverted_power_of_ten[12];
    auto const testStep = [&] (decimal const &testPriceStep)
    {
+      auto const testPricePrecision = inverted_power_of_ten[std::max<uint32_t>(6, testPriceStep.scale)];
       auto const testPriceStepValue = static_cast<double>(testPriceStep);
       for (auto testPeriod = testMinPeriod; testPeriod <= testMaxPeriod; ++testPeriod)
       {
@@ -85,7 +85,7 @@ TEST_F(TeAn, LinearRegression)
          auto const testValuesMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
          auto const testForecastsMatcher = testing::ElementsAreArray(testForecasts.get(), testIterationsNumber);
          std::vector<double> expectedValues;
-         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
+         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(TA_LINEARREG_Lookback(static_cast<int>(testPeriod)), static_cast<int>(testIndicator.lookback_period()));
             int expectedFirstIndex = 0;
@@ -118,7 +118,7 @@ TEST_F(TeAn, LinearRegression)
                ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue.slope * static_cast<double>(testPeriod - 1) + testCalcValue.intercept, testPricePrecision));
             }
          }
-         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::quiet_NaN());
+         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(TA_LINEARREG_INTERCEPT_Lookback(static_cast<int>(testPeriod)), static_cast<int>(testIndicator.lookback_period()));
             int expectedFirstIndex = 0;
@@ -136,7 +136,7 @@ TEST_F(TeAn, LinearRegression)
             ASSERT_EQ(expectedNumberOfElements, static_cast<int>(testIterationsNumber));
             ASSERT_THAT(expectedValues, testInterceptsMatcher);
          }
-         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::quiet_NaN());
+         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(TA_LINEARREG_SLOPE_Lookback(static_cast<int>(testPeriod)), static_cast<int>(testIndicator.lookback_period()));
             int expectedFirstIndex = 0;
@@ -154,7 +154,7 @@ TEST_F(TeAn, LinearRegression)
             ASSERT_EQ(expectedNumberOfElements, static_cast<int>(testIterationsNumber));
             ASSERT_THAT(expectedValues, testSlopesMatcher);
          }
-         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::quiet_NaN());
+         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(TA_TSF_Lookback(static_cast<int>(testPeriod)), static_cast<int>(testIndicator.lookback_period()));
             int expectedFirstIndex = 0;

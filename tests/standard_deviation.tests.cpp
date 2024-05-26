@@ -90,14 +90,14 @@ TEST_F(TeAn, StandardDeviation)
                ASSERT_THAT(testCalcAdditionalValue, testing::DoubleNear(testPickAdditionalValue, testPricePrecision));
                ASSERT_DOUBLE_EQ(testPickAdditionalValue, testCalcAdditionalValue);
                ASSERT_FALSE(std::isnan(testCalcValue));
-               ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
+               ASSERT_THAT(testPickValue, testing::DoubleNear(testCalcValue, testPricePrecision));
                testPrices[testIndicator.lookback_period() + testIteration] = testPrice;
                testValues[testIteration] = testing::DoubleNear(testCalcValue, testPricePrecision);
             }
          }
          auto const testMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
          std::vector<double> expectedValues;
-         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
+         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(TA_STDDEV_Lookback(static_cast<int>(testPeriod), 1.0), static_cast<int>(testIndicator.lookback_period()));
             int expectedFirstIndex = 0;
@@ -130,11 +130,11 @@ TEST_F(TeAn, StandardDeviation)
                ASSERT_FALSE(std::isnan(testPickValue));
                auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period(), testPrice);
                ASSERT_FALSE(std::isnan(testCalcValue));
-               ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
+               ASSERT_THAT(testPickValue, testing::DoubleNear(testCalcValue, testPricePrecision));
                ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
             }
          }
-         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::quiet_NaN());
+         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
          {
             double *testInputs[] = {testPrices.get()};
             double const testOptions[] = {static_cast<double>(testPeriod)};

@@ -86,7 +86,7 @@ TEST_F(TeAn, EaseOfMovement)
       }
       auto const testMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
       std::vector<double> expectedValues;
-      expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
+      expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
       {
          double *testInputs[] = {testHighPrices.get(), testLowPrices.get(), testTradedVolumes.get()};
          double *testOutputs[] = {expectedValues.data()};

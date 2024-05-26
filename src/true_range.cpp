@@ -84,7 +84,7 @@ double true_range::do_pick(uint64_t const inSequenceNumber, double const inHigh,
          }
       );
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 }

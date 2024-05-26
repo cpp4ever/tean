@@ -80,7 +80,7 @@ TEST_F(TeAn, RelativeStrengthIndex)
          }
          auto const testMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
          std::vector<double> expectedValues;
-         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
+         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(TA_SetUnstablePeriod(TA_FUNC_UNST_RSI, 0), TA_SUCCESS);
             ASSERT_EQ(TA_RSI_Lookback(static_cast<int>(testPeriod)), static_cast<int>(testIndicator.lookback_period()));
@@ -117,7 +117,7 @@ TEST_F(TeAn, RelativeStrengthIndex)
                ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
             }
          }
-         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::quiet_NaN());
+         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
          {
             double *testInputs[] = {testPrices.get()};
             double const testOptions[] = {static_cast<double>(testPeriod)};

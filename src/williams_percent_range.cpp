@@ -50,8 +50,8 @@ williams_percent_range::williams_percent_range(uint32_t const inPeriod) :
 {
    assert(1 < period());
 #if (not defined(NDEBUG))
-   std::fill(m_highValues.get(), m_highValues.get() + period(), std::numeric_limits<double>::quiet_NaN());
-   std::fill(m_lowValues.get(), m_lowValues.get() + period(), std::numeric_limits<double>::quiet_NaN());
+   std::fill(m_highValues.get(), m_highValues.get() + period(), std::numeric_limits<double>::signaling_NaN());
+   std::fill(m_lowValues.get(), m_lowValues.get() + period(), std::numeric_limits<double>::signaling_NaN());
 #endif
 }
 
@@ -99,14 +99,14 @@ double williams_percent_range::pick(uint64_t const inSequenceNumber, double cons
    {
       return do_lookback_pick(inHigh, inLow, inClose);
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 void williams_percent_range::reset() noexcept
 {
 #if (not defined(NDEBUG))
-   std::fill(m_highValues.get(), m_highValues.get() + period(), std::numeric_limits<double>::quiet_NaN());
-   std::fill(m_lowValues.get(), m_lowValues.get() + period(), std::numeric_limits<double>::quiet_NaN());
+   std::fill(m_highValues.get(), m_highValues.get() + period(), std::numeric_limits<double>::signaling_NaN());
+   std::fill(m_lowValues.get(), m_lowValues.get() + period(), std::numeric_limits<double>::signaling_NaN());
    m_prevSequenceNumber = 0;
 #endif
    m_highestHighIndex = 0;
@@ -144,7 +144,7 @@ double williams_percent_range::do_lookback_calc(uint64_t const inSequenceNumber,
       auto const delta = (highestHigh - lowestLow);
       return (0.0 == delta) ? 0.0 : (-100.0 * (highestHigh - inClose) / delta);
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 double williams_percent_range::do_lookback_pick(double const inHigh, double const inLow, double const inClose) const noexcept

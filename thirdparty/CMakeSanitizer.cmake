@@ -33,6 +33,6 @@ FetchContent_Declare(
    GIT_REPOSITORY https://github.com/cpp4ever/CMakeSanitizer.git
    GIT_SHALLOW ON
    GIT_SUBMODULES_RECURSE ON
-   GIT_TAG v2024.03.21
+   GIT_TAG v2024.05.26
 )
 FetchContent_MakeAvailable(CMakeSanitizer)

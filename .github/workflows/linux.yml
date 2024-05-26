@@ -14,6 +14,7 @@ jobs:
     name: "${{matrix.os}} ${{matrix.compiler}} ${{matrix.build_type}} ${{matrix.sanitizer}}"
     runs-on: ${{matrix.os}}
     strategy:
+      fail-fast: false
       matrix:
         compiler: [clang, gcc]
         build_type: [Debug, Release]
@@ -30,7 +31,7 @@ jobs:
             packages: g++-12 libstdc++-12-dev
         exclude:
           - compiler: gcc
-            sanitizer: MSan
+            sanitizer: MSan # Not supported
 
     steps:
     - uses: actions/checkout@v4

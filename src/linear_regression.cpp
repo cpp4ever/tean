@@ -79,8 +79,8 @@ linear_regression::result_type linear_regression::calc(uint64_t const inSequence
    }
    return result_type
    {
-      .intercept = std::numeric_limits<double>::quiet_NaN(),
-      .slope = std::numeric_limits<double>::quiet_NaN(),
+      .intercept = std::numeric_limits<double>::signaling_NaN(),
+      .slope = std::numeric_limits<double>::signaling_NaN(),
    };
 }
 

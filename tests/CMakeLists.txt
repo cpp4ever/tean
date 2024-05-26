@@ -54,12 +54,13 @@ if(CXX_SANITIZERS_LENGTH GREATER 0)
          tests
          FLAGS
             print_suppressions=true
+            exitcode=1
             print_stacktrace=true
             report_error_type=true
             silence_unsigned_overflow=true
       )
    else()
-      target_cxx_sanitizer(tests ${SANITIZER})
+      target_cxx_sanitizer(tests ${SANITIZER} FLAGS exitcode=1)
    endif()
 endif()
 get_filename_component(CXX_LINKER_DIRECTORY ${CMAKE_LINKER} DIRECTORY)

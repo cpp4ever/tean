@@ -153,9 +153,9 @@ TEST_F(TeAn, BollingerBands)
          std::vector<double> expectedUpperValues;
          std::vector<double> expectedMiddleValues;
          std::vector<double> expectedLowerValues;
-         expectedUpperValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
-         expectedMiddleValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
-         expectedLowerValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
+         expectedUpperValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
+         expectedMiddleValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
+         expectedLowerValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(
                TA_BBANDS_Lookback(

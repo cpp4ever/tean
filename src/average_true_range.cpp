@@ -74,7 +74,7 @@ double average_true_range::do_calc(uint64_t const inSequenceNumber, double const
    {
       assert(true == std::isnan(inTrueRange));
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 double average_true_range::do_pick(uint64_t const inSequenceNumber, double const inTrueRange) const noexcept
@@ -90,7 +90,7 @@ double average_true_range::do_pick(uint64_t const inSequenceNumber, double const
       assert(period() == lookback_period());
       return (m_value + inTrueRange) / static_cast<double>(period());
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 }

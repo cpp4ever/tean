@@ -65,7 +65,7 @@ double accumulation_distribution_oscillator::do_calc(uint64_t const inSequenceNu
       m_fastMovingAverage = inAccumulationDistribution;
       m_slowMovingAverage = inAccumulationDistribution;
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 double accumulation_distribution_oscillator::do_pick(uint64_t const inSequenceNumber, double const inAccumulationDistribution) const noexcept
@@ -78,7 +78,7 @@ double accumulation_distribution_oscillator::do_pick(uint64_t const inSequenceNu
       auto const slowMovingAverage = m_slowMovingAverage + m_slowSmoothingFactor * (inAccumulationDistribution - m_slowMovingAverage);
       return fastMovingAverage - slowMovingAverage;
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 }

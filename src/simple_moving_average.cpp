@@ -41,7 +41,7 @@ double simple_moving_average::do_calc(uint64_t const inSequenceNumber, double co
       assert(false == std::isnan(inSumOverPeriod));
       return inSumOverPeriod / static_cast<double>(period());
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 double simple_moving_average::do_pick(uint64_t const inSequenceNumber, double const inSumOverPeriod) const noexcept
@@ -52,7 +52,7 @@ double simple_moving_average::do_pick(uint64_t const inSequenceNumber, double co
       assert(false == std::isnan(inSumOverPeriod));
       return inSumOverPeriod / static_cast<double>(period());
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 }

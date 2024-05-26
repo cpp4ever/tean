@@ -43,9 +43,9 @@ class [[nodiscard]] bollinger_bands final
 public:
    struct [[maybe_unused, nodiscard]] result_type final
    {
-      [[maybe_unused]] double upper = std::numeric_limits<double>::quiet_NaN();
-      [[maybe_unused]] double middle = std::numeric_limits<double>::quiet_NaN();
-      [[maybe_unused]] double lower = std::numeric_limits<double>::quiet_NaN();
+      [[maybe_unused]] double upper = std::numeric_limits<double>::signaling_NaN();
+      [[maybe_unused]] double middle = std::numeric_limits<double>::signaling_NaN();
+      [[maybe_unused]] double lower = std::numeric_limits<double>::signaling_NaN();
    };
 
 public:

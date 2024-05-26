@@ -47,7 +47,7 @@ variance::variance(uint32_t const inPeriod) :
 {
    assert(1 < period());
 #if (not defined(NDEBUG))
-   std::fill(m_values.get(), m_values.get() + lookback_period(), std::numeric_limits<double>::quiet_NaN());
+   std::fill(m_values.get(), m_values.get() + lookback_period(), std::numeric_limits<double>::signaling_NaN());
 #endif
 }
 
@@ -63,7 +63,7 @@ double variance::calc(uint64_t inSequenceNumber, double inValue, double &outMean
    {
       return do_regular_calc(inSequenceNumber, inValue, outMean);
    }
-   outMean = std::numeric_limits<double>::quiet_NaN();
+   outMean = std::numeric_limits<double>::signaling_NaN();
    return do_lookback_calc(inSequenceNumber, inValue);
 }
 
@@ -80,14 +80,14 @@ double variance::pick(uint64_t const inSequenceNumber, double const inValue, dou
       auto const meanOfSquares = (m_sumOfSquares + inValue * inValue) / static_cast<double>(period());
       return meanOfSquares - outMean * outMean;
    }
-   outMean = std::numeric_limits<double>::quiet_NaN();
-   return std::numeric_limits<double>::quiet_NaN();
+   outMean = std::numeric_limits<double>::signaling_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 void variance::reset() noexcept
 {
 #if (not defined(NDEBUG))
-   std::fill(m_values.get(), m_values.get() + lookback_period(), std::numeric_limits<double>::quiet_NaN());
+   std::fill(m_values.get(), m_values.get() + lookback_period(), std::numeric_limits<double>::signaling_NaN());
    m_prevSequenceNumber = 0;
 #endif
    m_sum = 0.0;
@@ -99,7 +99,7 @@ double variance::do_lookback_calc(uint64_t const inSequenceNumber, double const 
    m_sum += inValue;
    m_sumOfSquares += inValue * inValue;
    m_values[inSequenceNumber % lookback_period()] = inValue;
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 double variance::do_regular_calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept

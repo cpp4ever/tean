@@ -114,7 +114,7 @@ TEST_F(TeAn, AccumulationDistributionOscillator)
          }
          auto const testMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
          std::vector<double> expectedValues;
-         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
+         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, static_cast<int>(testUnstablePeriod)), TA_SUCCESS);
             ASSERT_EQ(TA_ADOSC_Lookback(static_cast<int>(testFastPeriod), static_cast<int>(testSlowPeriod)), static_cast<int>(testIndicator.lookback_period()));

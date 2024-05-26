@@ -40,7 +40,7 @@ relative_strength_index::relative_strength_index(uint32_t const inPeriod) noexce
 #endif
    m_smoothGain(0.0),
    m_smoothLoss(0.0),
-   m_value(std::numeric_limits<double>::quiet_NaN())
+   m_value(std::numeric_limits<double>::signaling_NaN())
 {
    assert(1 < period());
 }
@@ -75,7 +75,7 @@ double relative_strength_index::pick(uint64_t const inSequenceNumber, double con
    {
       return do_lookback_pick(inValue);
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 void relative_strength_index::reset() noexcept
@@ -85,7 +85,7 @@ void relative_strength_index::reset() noexcept
 #endif
    m_smoothGain = 0.0;
    m_smoothLoss = 0.0;
-   m_value = std::numeric_limits<double>::quiet_NaN();
+   m_value = std::numeric_limits<double>::signaling_NaN();
 }
 
 double relative_strength_index::do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
@@ -110,7 +110,7 @@ double relative_strength_index::do_lookback_calc(uint64_t const inSequenceNumber
       auto const smoothTotal = m_smoothGain + m_smoothLoss;
       return (0.0 == smoothTotal) ? 0.0 : (100.0 * (m_smoothGain / smoothTotal));
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 double relative_strength_index::do_lookback_pick(double const inValue) const noexcept

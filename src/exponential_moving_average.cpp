@@ -75,7 +75,7 @@ double exponential_moving_average::calc(uint64_t const inSequenceNumber, double 
          }
       }
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 double exponential_moving_average::pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
@@ -93,7 +93,7 @@ double exponential_moving_average::pick(uint64_t const inSequenceNumber, double 
    {
       return (m_value + inValue) / static_cast<double>(period());
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 }

@@ -42,7 +42,7 @@ double standard_deviation::variance_to_standard_deviation(uint64_t const inSeque
       return (0.0 >= inVariance) ? 0.0 : std::sqrt(inVariance);
    }
    assert(true == std::isnan(inVariance));
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 }

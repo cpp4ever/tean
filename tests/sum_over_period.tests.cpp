@@ -86,7 +86,7 @@ TEST_F(TeAn, SumOverPeriod)
          }
          auto const testMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
          std::vector<double> expectedValues;
-         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
+         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
          {
             ASSERT_EQ(TA_SUM_Lookback(static_cast<int>(testPeriod)), static_cast<int>(testIndicator.lookback_period()));
             int expectedFirstIndex = 0;
@@ -128,7 +128,7 @@ TEST_F(TeAn, SumOverPeriod)
                ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
             }
          }
-         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::quiet_NaN());
+         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
          {
             double *testInputs[] = {testPrices.get()};
             double const testOptions[] = {static_cast<double>(testPeriod)};

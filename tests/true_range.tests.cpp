@@ -84,7 +84,7 @@ TEST_F(TeAn, TrueRange)
       }
       auto const testMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
       std::vector<double> expectedValues;
-      expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::quiet_NaN());
+      expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
       {
          int expectedFirstIndex = 0;
          int expectedNumberOfElements = 0;
@@ -124,7 +124,7 @@ TEST_F(TeAn, TrueRange)
             ASSERT_THAT(expectedValues[0], testing::DoubleEq(testCalcValue));
          }
       }
-      std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::quiet_NaN());
+      std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
       expectedValues.resize(testIterationsNumber + 1);
       {
          double *testInputs[] = {testHighPrices.get(), testLowPrices.get(), testClosePrices.get()};

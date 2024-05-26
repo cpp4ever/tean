@@ -47,7 +47,7 @@ double ease_of_movement::calc(uint64_t const inSequenceNumber, double const inHi
    assert(false == std::isnan(inVolume));
    assert(inHigh >= inLow);
    assert(0.0 <= inVolume);
-   auto emv = std::numeric_limits<double>::quiet_NaN();
+   auto emv = std::numeric_limits<double>::signaling_NaN();
    auto const mean = (inHigh + inLow) * 0.5;
    if (0 < inSequenceNumber) [[likely]]
    {
@@ -77,7 +77,7 @@ double ease_of_movement::pick(uint64_t const inSequenceNumber, double const inHi
       auto const boxRatio = inVolume / 10000.0 / (inHigh - inLow);
       return (mean - m_mean) / boxRatio;
    }
-   return std::numeric_limits<double>::quiet_NaN();
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
 }
