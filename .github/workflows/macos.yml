@@ -36,13 +36,13 @@ jobs:
             compiler: gcc
             cc: gcc-12
             cxx: g++-12
-            standard-libraries: -DCMAKE_CXX_STANDARD_LIBRARIES="-ld64" # Use classic linker
+            standard-libraries: -DCMAKE_CXX_STANDARD_LIBRARIES="-Wl,-ld_classic" # Use classic linker
             packages:
           - os: macos-14
             compiler: gcc
             cc: gcc-13
             cxx: g++-13
-            standard-libraries: -DCMAKE_CXX_STANDARD_LIBRARIES="-ld64" # Use classic linker
+            standard-libraries: -DCMAKE_CXX_STANDARD_LIBRARIES="-Wl,-ld_classic" # Use classic linker
             packages:
         exclude:
           - compiler: gcc
