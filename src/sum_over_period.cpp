@@ -29,7 +29,6 @@
 #include <cassert> /// for assert
 #include <cmath> /// for std::isfinite, std::isnan
 #include <cstdint> /// for uint32_t, uint64_t
-#include <limits> /// for std::numeric_limits
 #include <memory> /// for std::make_unique
 
 namespace tean

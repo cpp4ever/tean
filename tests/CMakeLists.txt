@@ -53,7 +53,6 @@ if(CXX_SANITIZERS_LENGTH GREATER 0)
       target_cxx_ubsan(
          tests
          FLAGS
-            print_suppressions=true
             exitcode=1
             print_stacktrace=true
             report_error_type=true

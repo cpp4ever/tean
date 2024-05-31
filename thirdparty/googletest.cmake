@@ -28,6 +28,7 @@ include(FetchContent)
 set(BUILD_GMOCK ON CACHE BOOL "Enable googlemock targets" FORCE)
 set(GTEST_HAS_ABSL OFF CACHE BOOL "Disable Abseil and RE2 dependencies" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "Disable install targets" FORCE)
+set(gtest_disable_pthreads ON CACHE BOOL "Disable pthreads" FORCE)
 FetchContent_Declare(
    googletest
    # Download Step Options
