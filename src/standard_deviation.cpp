@@ -26,22 +26,21 @@
 #include "tean/standard_deviation.hpp" /// for tean::standard_deviation
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isfinite, std::isnan
+#include <cmath> /// for std::isfinite, std::sqrt
 #include <cstdint> /// for uint64_t
 #include <limits> /// for std::numeric_limits
 
 namespace tean
 {
 
-double standard_deviation::variance_to_standard_deviation(uint64_t const inSequenceNumber, double const inVariance) const noexcept
+double standard_deviation<static_cast<uint32_t>(-1)>::variance_to_standard_deviation(uint64_t const inSequenceNumber, double const inVariance) const noexcept
 {
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
       assert(true == std::isfinite(inVariance));
-      assert(false == std::isnan(inVariance));
-      return (0.0 >= inVariance) ? 0.0 : std::sqrt(inVariance);
+      return (0 >= inVariance) ? 0.0 : std::sqrt(inVariance);
    }
-   assert(true == std::isnan(inVariance));
+   assert(false == std::isfinite(inVariance));
    return std::numeric_limits<double>::signaling_NaN();
 }
 

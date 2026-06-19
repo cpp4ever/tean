@@ -44,109 +44,155 @@
 namespace tean::tests
 {
 
-TEST_F(TeAn, Variance)
+template<uint32_t test_period>
+void test_variance_step(TeAn &fixture, decimal const testPriceStep)
 {
-   constexpr uint32_t testMinPeriod = 2;
-   constexpr uint32_t testMaxPeriod = 100;
-   auto const testStep = [&] (decimal const &testPriceStep)
+   constexpr auto testLookbackPeriod{variance<test_period>::lookback_period,};
+   constexpr auto testIterationsNumber{test_period * 10,};
+   auto const testPrices{std::make_unique<double[]>(testLookbackPeriod + testIterationsNumber),};
+   auto const testValues{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};
    {
-      auto const testPricePrecision = inverted_power_of_ten[testPriceStep.scale / 3] * inverted_power_of_ten[1];
-      auto const testPriceStepValue = static_cast<double>(testPriceStep);
-      for (auto testPeriod = testMinPeriod; testPeriod <= testMaxPeriod; ++testPeriod)
+      variance<test_period> testIndicator{};
+      auto const testPricePrecision{inverted_power_of_ten[testPriceStep.scale / 3] * inverted_power_of_ten[1],};
+      double const testPriceStepValue{testPriceStep,};
       {
-         auto const testIterationsNumber = testPeriod * 10;
-         variance testIndicator{testPeriod};
-         ASSERT_EQ(testPeriod, testIndicator.period());
-         auto testPrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
-         auto testValues = std::make_unique<testing::Matcher<double>[]>(testIterationsNumber);
+         tean::simple_moving_average testAdditionalIndicator{test_period};
+         for (uint32_t testIteration{0,}; testIteration < testLookbackPeriod; ++testIteration)
          {
-            tean::simple_moving_average testAdditionalIndicator{testPeriod};
-            for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
-            {
-               auto const testPrice = testPriceStepValue * random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 1]);
-               [[maybe_unused]] auto const testAdditionalValue = testAdditionalIndicator.calc(testIteration, testPrice);
-               auto testPickAdditionalValue = 0.0;
-               auto const testPickValue = testIndicator.pick(testIteration, testPrice, testPickAdditionalValue);
-               ASSERT_TRUE(std::isnan(testPickAdditionalValue));
-               ASSERT_TRUE(std::isnan(testPickValue));
-               auto testCalcAdditionalValue = 0.0;
-               auto const testCalcValue = testIndicator.calc(testIteration, testPrice, testCalcAdditionalValue);
-               ASSERT_TRUE(std::isnan(testCalcAdditionalValue));
-               ASSERT_TRUE(std::isnan(testCalcValue));
-               testPrices[testIteration] = testPrice;
-            }
-            for (uint32_t testIteration = 0; testIteration < testIterationsNumber; ++testIteration)
-            {
-               auto const testPrice = testPriceStepValue * random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 1]);
-               auto const testAdditionalValue = testAdditionalIndicator.calc(testIndicator.lookback_period() + testIteration, testPrice);
-               auto testPickAdditionalValue = 0.0;
-               auto const testPickValue = testIndicator.pick(testIndicator.lookback_period() + testIteration, testPrice, testPickAdditionalValue);
-               ASSERT_FALSE(std::isnan(testPickAdditionalValue));
-               ASSERT_THAT(testAdditionalValue, testing::DoubleNear(testPickAdditionalValue, testPricePrecision));
-               ASSERT_FALSE(std::isnan(testPickValue));
-               auto testCalcAdditionalValue = 0.0;
-               auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period() + testIteration, testPrice, testCalcAdditionalValue);
-               ASSERT_FALSE(std::isnan(testCalcAdditionalValue));
-               ASSERT_THAT(testAdditionalValue, testing::DoubleNear(testCalcAdditionalValue, testPricePrecision));
-               ASSERT_FALSE(std::isnan(testCalcValue));
-               ASSERT_DOUBLE_EQ(testPickAdditionalValue, testCalcAdditionalValue);
-               ASSERT_THAT(testPickValue, testing::DoubleNear(testCalcValue, testPricePrecision));
-               testPrices[testIndicator.lookback_period() + testIteration] = testPrice;
-               testValues[testIteration] = testing::DoubleNear(testCalcValue, testPricePrecision);
-            }
+            auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 1]),};
+            [[maybe_unused]] auto const testAdditionalValue{testAdditionalIndicator.calc(testIteration, testPrice),};
+            double testPickAdditionalValue{0,};
+            auto const testPickValue{testIndicator.pick(testIteration, testPrice, testPickAdditionalValue),};
+            ASSERT_FALSE(std::isfinite(testPickAdditionalValue));
+            ASSERT_FALSE(std::isfinite(testPickValue));
+            double testCalcAdditionalValue{0,};
+            auto const testCalcValue{testIndicator.calc(testIteration, testPrice, testCalcAdditionalValue),};
+            ASSERT_FALSE(std::isfinite(testCalcAdditionalValue));
+            ASSERT_FALSE(std::isfinite(testCalcValue));
+            testPrices[testIteration] = testPrice;
          }
-         auto const testMatcher = testing::ElementsAreArray(testValues.get(), testIterationsNumber);
-         std::vector<double> expectedValues;
-         expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
+         for (uint32_t testIteration{0,}; testIteration < testIterationsNumber; ++testIteration)
          {
-            ASSERT_EQ(TA_VAR_Lookback(static_cast<int>(testPeriod), 1.0), static_cast<int>(testIndicator.lookback_period()));
-            int expectedFirstIndex = 0;
-            int expectedNumberOfElements = 0;
-            ASSERT_EQ(TA_VAR(
-               0,
-               static_cast<int>(testIndicator.lookback_period() + testIterationsNumber) - 1,
-               testPrices.get(),
-               static_cast<int>(testPeriod),
-               1.0,
-               std::addressof(expectedFirstIndex),
-               std::addressof(expectedNumberOfElements),
-               expectedValues.data()
-            ), TA_SUCCESS);
-            ASSERT_EQ(expectedFirstIndex, static_cast<int>(testIndicator.lookback_period()));
-            ASSERT_EQ(expectedNumberOfElements, static_cast<int>(testIterationsNumber));
-            ASSERT_THAT(expectedValues, testMatcher);
-            testIndicator.reset();
-            for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
-            {
-               auto const testPrice = testPrices[testIteration];
-               auto const testPickValue = testIndicator.pick(testIteration, testPrice);
-               ASSERT_TRUE(std::isnan(testPickValue));
-               auto const testCalcValue = testIndicator.calc(testIteration, testPrice);
-               ASSERT_TRUE(std::isnan(testCalcValue));
-            }
-            {
-               auto const testPrice = testPrices[testIndicator.lookback_period()];
-               auto const testPickValue = testIndicator.pick(testIndicator.lookback_period(), testPrice);
-               ASSERT_FALSE(std::isnan(testPickValue));
-               auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period(), testPrice);
-               ASSERT_FALSE(std::isnan(testCalcValue));
-               ASSERT_THAT(testPickValue, testing::DoubleNear(testCalcValue, testPricePrecision));
-               ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
-            }
-         }
-         std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
-         {
-            double *testInputs[] = {testPrices.get()};
-            double const testOptions[] = {static_cast<double>(testPeriod)};
-            double *testOutputs[] = {expectedValues.data()};
-            ASSERT_EQ(ti_var_start(testOptions), static_cast<int>(testIndicator.lookback_period()));
-            ASSERT_EQ(TI_OKAY, ti_var(static_cast<int>(testIndicator.lookback_period() + testIterationsNumber), testInputs, testOptions, testOutputs));
-            ASSERT_THAT(expectedValues, testMatcher);
+            auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 1]),};
+            auto const testAdditionalValue{testAdditionalIndicator.calc(testLookbackPeriod + testIteration, testPrice),};
+            double testPickAdditionalValue{0,};
+            auto const testPickValue{testIndicator.pick(testLookbackPeriod + testIteration, testPrice, testPickAdditionalValue),};
+            ASSERT_TRUE(std::isfinite(testPickAdditionalValue));
+            ASSERT_THAT(testAdditionalValue, testing::DoubleNear(testPickAdditionalValue, testPricePrecision));
+            ASSERT_TRUE(std::isfinite(testPickValue));
+            double testCalcAdditionalValue{0.0,};
+            auto const testCalcValue{testIndicator.calc(testLookbackPeriod + testIteration, testPrice, testCalcAdditionalValue),};
+            ASSERT_TRUE(std::isfinite(testCalcAdditionalValue));
+            ASSERT_THAT(testAdditionalValue, testing::DoubleNear(testCalcAdditionalValue, testPricePrecision));
+            ASSERT_TRUE(std::isfinite(testCalcValue));
+            ASSERT_DOUBLE_EQ(testPickAdditionalValue, testCalcAdditionalValue);
+            ASSERT_THAT(testPickValue, testing::DoubleNear(testCalcValue, testPricePrecision));
+            testPrices[testLookbackPeriod + testIteration] = testPrice;
+            testValues[testIteration] = testing::DoubleNear(testCalcValue, testPricePrecision);
          }
       }
-   };
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12}));
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00}));
+      auto const testMatcher{testing::ElementsAreArray(testValues.get(), testIterationsNumber),};
+      std::vector<double> expectedValues;
+      expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
+      {
+         ASSERT_EQ(TA_VAR_Lookback(static_cast<int>(test_period), 1.0), static_cast<int>(testLookbackPeriod));
+         int expectedFirstIndex{0,};
+         int expectedNumberOfElements{0,};
+         ASSERT_EQ(TA_VAR(
+            0,
+            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1,
+            testPrices.get(),
+            static_cast<int>(test_period),
+            1.0,
+            std::addressof(expectedFirstIndex),
+            std::addressof(expectedNumberOfElements),
+            expectedValues.data()
+         ), TA_SUCCESS);
+         ASSERT_EQ(expectedFirstIndex, static_cast<int>(testLookbackPeriod));
+         ASSERT_EQ(expectedNumberOfElements, static_cast<int>(testIterationsNumber));
+         ASSERT_THAT(expectedValues, testMatcher);
+         testIndicator.reset();
+         for (uint32_t testIteration{0,}; testIteration < testLookbackPeriod; ++testIteration)
+         {
+            auto const testPrice{testPrices[testIteration],};
+            auto const testPickValue{testIndicator.pick(testIteration, testPrice),};
+            ASSERT_FALSE(std::isfinite(testPickValue));
+            auto const testCalcValue{testIndicator.calc(testIteration, testPrice),};
+            ASSERT_FALSE(std::isfinite(testCalcValue));
+         }
+         {
+            auto const testPrice{testPrices[testLookbackPeriod],};
+            auto const testPickValue{testIndicator.pick(testLookbackPeriod, testPrice),};
+            ASSERT_TRUE(std::isfinite(testPickValue));
+            auto const testCalcValue{testIndicator.calc(testLookbackPeriod, testPrice),};
+            ASSERT_TRUE(std::isfinite(testCalcValue));
+            ASSERT_THAT(testPickValue, testing::DoubleNear(testCalcValue, testPricePrecision));
+            ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
+         }
+      }
+      std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
+      {
+         double *testInputs[]{testPrices.get(),};
+         double const testOptions[]{test_period,};
+         double *testOutputs[]{expectedValues.data(),};
+         ASSERT_EQ(ti_var_start(testOptions), static_cast<int>(testLookbackPeriod));
+         ASSERT_EQ(TI_OKAY, ti_var(static_cast<int>(testLookbackPeriod + testIterationsNumber), testInputs, testOptions, testOutputs));
+         ASSERT_THAT(expectedValues, testMatcher);
+      }
+   }
+   {
+      variance<> testIndicator{test_period,};
+      ASSERT_EQ(test_period, testIndicator.period());
+      ASSERT_EQ(testLookbackPeriod, testIndicator.lookback_period());
+      for (uint32_t testIteration{0,}; testIteration < (testLookbackPeriod + testIterationsNumber); ++testIteration)
+      {
+         auto const testPickValue{testIndicator.pick(testIteration, testPrices[testIteration]),};
+         auto const testCalcValue{testIndicator.calc(testIteration, testPrices[testIteration]),};
+         if (testLookbackPeriod > testIteration)
+         {
+            ASSERT_FALSE(std::isfinite(testPickValue));
+            ASSERT_FALSE(std::isfinite(testCalcValue));
+         }
+         else
+         {
+            ASSERT_THAT(testPickValue, testValues[testIteration - testLookbackPeriod]);
+            ASSERT_THAT(testCalcValue, testValues[testIteration - testLookbackPeriod]);
+         }
+      }
+      testIndicator.reset();
+      for (uint32_t testIteration{0,}; testIteration <= testLookbackPeriod; ++testIteration)
+      {
+         auto const testPickValue{testIndicator.pick(testIteration, testPrices[testIteration]),};
+         auto const testCalcValue{testIndicator.calc(testIteration, testPrices[testIteration]),};
+         if (testLookbackPeriod > testIteration)
+         {
+            ASSERT_FALSE(std::isfinite(testPickValue));
+            ASSERT_FALSE(std::isfinite(testCalcValue));
+         }
+         else
+         {
+            ASSERT_THAT(testPickValue, testValues[testIteration - testLookbackPeriod]);
+            ASSERT_THAT(testCalcValue, testValues[testIteration - testLookbackPeriod]);
+         }
+      }
+   }
+}
+
+template<uint32_t test_period>
+void test_variance(TeAn &fixture, decimal const testPriceStep)
+{
+   test_variance_step<test_period>(fixture, testPriceStep);
+   if constexpr (2 < test_period)
+   {
+      test_variance<test_period - 1>(fixture, testPriceStep);
+   }
+}
+
+TEST_F(TeAn, Variance)
+{
+   constexpr uint32_t testMaxPeriod{100,};
+   ASSERT_NO_FATAL_FAILURE(test_variance<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12}));
+   ASSERT_NO_FATAL_FAILURE(test_variance<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00}));
 }
 
 }

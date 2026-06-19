@@ -25,90 +25,84 @@
 
 #include "tean/variance.hpp" /// for tean::variance
 
-#include <algorithm> /// for std::fill
+#include <algorithm> /// for std::ranges::fill
 #include <cassert> /// for assert
-#include <cmath> /// for std::isfinite, std::isnan
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 #include <memory> /// for std::make_unique
+#include <span> /// for std::span
 
 namespace tean
 {
 
-variance::variance(uint32_t const inPeriod) :
+variance<static_cast<uint32_t>(-1)>::variance(uint32_t const inPeriod) :
    m_period(inPeriod),
    m_lookbackPeriod(inPeriod - 1),
-   m_values(std::make_unique<double[]>(inPeriod - 1)),
-#if (not defined(NDEBUG))
-   m_prevSequenceNumber(0),
-#endif
-   m_sum(0.0),
-   m_sumOfSquares(0.0)
+   m_values(std::make_unique<double[]>(inPeriod - 1))
 {
    assert(1 < period());
 #if (not defined(NDEBUG))
-   std::fill(m_values.get(), m_values.get() + lookback_period(), std::numeric_limits<double>::signaling_NaN());
+   std::ranges::fill(std::span{m_values.get(), lookback_period(),}, std::numeric_limits<double>::signaling_NaN());
 #endif
 }
 
-double variance::calc(uint64_t inSequenceNumber, double inValue, double &outMean) noexcept
+double variance<static_cast<uint32_t>(-1)>::calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
 {
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
    assert(true == std::isfinite(inValue));
-   assert(false == std::isnan(inValue));
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
       return do_regular_calc(inSequenceNumber, inValue, outMean);
    }
+   do_lookback_calc(inSequenceNumber, inValue);
    outMean = std::numeric_limits<double>::signaling_NaN();
-   return do_lookback_calc(inSequenceNumber, inValue);
+   return std::numeric_limits<double>::signaling_NaN();
 }
 
-double variance::pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
+double variance<static_cast<uint32_t>(-1)>::pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
 {
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
 #endif
    assert(true == std::isfinite(inValue));
-   assert(false == std::isnan(inValue));
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
-      outMean = (m_sum + inValue) / static_cast<double>(period());
-      auto const meanOfSquares = (m_sumOfSquares + inValue * inValue) / static_cast<double>(period());
+      outMean = (m_sum + inValue) / period();
+      auto const meanOfSquares{(m_sumOfSquares + inValue * inValue) / period(),};
       return meanOfSquares - outMean * outMean;
    }
    outMean = std::numeric_limits<double>::signaling_NaN();
    return std::numeric_limits<double>::signaling_NaN();
 }
 
-void variance::reset() noexcept
+void variance<static_cast<uint32_t>(-1)>::reset() noexcept
 {
+   m_sum = 0;
+   m_sumOfSquares = 0;
 #if (not defined(NDEBUG))
-   std::fill(m_values.get(), m_values.get() + lookback_period(), std::numeric_limits<double>::signaling_NaN());
+   std::ranges::fill(std::span{m_values.get(), lookback_period(),}, std::numeric_limits<double>::signaling_NaN());
    m_prevSequenceNumber = 0;
 #endif
-   m_sum = 0.0;
-   m_sumOfSquares = 0.0;
 }
 
-double variance::do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+void variance<static_cast<uint32_t>(-1)>::do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
 {
    m_sum += inValue;
    m_sumOfSquares += inValue * inValue;
    m_values[inSequenceNumber % lookback_period()] = inValue;
-   return std::numeric_limits<double>::signaling_NaN();
 }
 
-double variance::do_regular_calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
+double variance<static_cast<uint32_t>(-1)>::do_regular_calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
 {
    m_sum += inValue;
    m_sumOfSquares += inValue * inValue;
-   outMean = m_sum / static_cast<double>(period());
-   auto const meanOfSquares = m_sumOfSquares / static_cast<double>(period());
-   auto &prevValue = m_values[inSequenceNumber % lookback_period()];
+   outMean = m_sum / period();
+   auto const meanOfSquares{m_sumOfSquares / period(),};
+   auto &prevValue{m_values[inSequenceNumber % lookback_period()],};
    m_sum -= prevValue;
    m_sumOfSquares -= prevValue * prevValue;
    prevValue = inValue;

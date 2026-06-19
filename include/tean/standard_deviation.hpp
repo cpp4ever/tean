@@ -27,12 +27,72 @@
 
 #include "tean/variance.hpp" /// for tean::variance
 
+#include <cassert> /// for assert
+#include <cmath> /// for std::isfinite, std::sqrt
 #include <cstdint> /// for uint32_t, uint64_t
+#include <limits> /// for std::numeric_limits
 
 namespace tean
 {
 
-class [[nodiscard]] standard_deviation final
+template<uint32_t period = static_cast<uint32_t>(-1)>
+class standard_deviation;
+
+template<uint32_t period>
+class [[maybe_unused]] standard_deviation final
+{
+public:
+   static constexpr inline auto lookback_period{variance<period>::lookback_period,};
+
+   [[maybe_unused, nodiscard]] constexpr standard_deviation() noexcept = default;
+   standard_deviation(standard_deviation &&) = delete;
+   standard_deviation(standard_deviation const &) = delete;
+
+   standard_deviation &operator = (standard_deviation &&) = delete;
+   standard_deviation &operator = (standard_deviation const &) = delete;
+
+   [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+   {
+      return variance_to_standard_deviation(inSequenceNumber, m_variance.calc(inSequenceNumber, inValue));
+   }
+
+   [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
+   {
+      return variance_to_standard_deviation(inSequenceNumber, m_variance.calc(inSequenceNumber, inValue, outMean));
+   }
+
+   [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
+   {
+      return variance_to_standard_deviation(inSequenceNumber, m_variance.pick(inSequenceNumber, inValue));
+   }
+
+   [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
+   {
+      return variance_to_standard_deviation(inSequenceNumber, m_variance.pick(inSequenceNumber, inValue, outMean));
+   }
+
+   [[maybe_unused]] constexpr void reset() noexcept
+   {
+      m_variance.reset();
+   }
+
+private:
+   variance<period> m_variance{};
+
+   [[maybe_unused, nodiscard]] constexpr double variance_to_standard_deviation(uint64_t const inSequenceNumber, double const inVariance) const noexcept
+   {
+      if (lookback_period <= inSequenceNumber) [[likely]]
+      {
+         assert(true == std::isfinite(inVariance));
+         return (0 >= inVariance) ? 0.0 : std::sqrt(inVariance);
+      }
+      assert(false == std::isfinite(inVariance));
+      return std::numeric_limits<double>::signaling_NaN();
+   }
+};
+
+template<>
+class [[maybe_unused]] standard_deviation<static_cast<uint32_t>(-1)> final
 {
 public:
    standard_deviation() = delete;
@@ -82,7 +142,7 @@ public:
    }
 
 private:
-   variance m_variance;
+   variance<> m_variance;
 
    [[nodiscard]] double variance_to_standard_deviation(uint64_t inSequenceNumber, double inVariance) const noexcept;
 };

@@ -25,13 +25,126 @@
 
 #pragma once
 
-#include <cstdint> /// for uint32_t, uint64_t
+#include <algorithm> /// for std::ranges::fill
+#include <array> /// for std::array
+#include <cassert> /// for assert
+#include <cmath> /// for std::isfinite
+#include <cstdint> /// for int32_t, uint32_t, uint64_t
+#include <limits> /// for std::numeric_limits
 #include <memory> /// for std::unique_ptr
 
 namespace tean
 {
 
-class [[nodiscard]] variance final
+template<uint32_t period = static_cast<uint32_t>(-1)>
+class variance;
+
+template<uint32_t period>
+class [[maybe_unused]] variance
+{
+   static_assert(1 < period);
+
+public:
+   static constexpr inline auto lookback_period{period - 1,};
+
+   [[maybe_unused, nodiscard]] constexpr variance() noexcept
+   {
+#if (not defined(NDEBUG))
+      std::ranges::fill(m_values, std::numeric_limits<double>::signaling_NaN());
+#endif
+   }
+
+   variance(variance &&) = delete;
+   variance(variance const &) = delete;
+
+   variance &operator = (variance &&) = delete;
+   variance &operator = (variance const &) = delete;
+
+   [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+   {
+      double mean{};
+      return calc(inSequenceNumber, inValue, mean);
+   }
+
+   [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
+   {
+#if (not defined(NDEBUG))
+      assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+      m_prevSequenceNumber = inSequenceNumber;
+#endif
+      assert(true == std::isfinite(inValue));
+      if (lookback_period <= inSequenceNumber) [[likely]]
+      {
+         return do_regular_calc(inSequenceNumber, inValue, outMean);
+      }
+      do_lookback_calc(inSequenceNumber, inValue);
+      outMean = std::numeric_limits<double>::signaling_NaN();
+      return std::numeric_limits<double>::signaling_NaN();
+   }
+
+   [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
+   {
+      double mean{};
+      return pick(inSequenceNumber, inValue, mean);
+   }
+
+   [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
+   {
+#if (not defined(NDEBUG))
+      assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+#endif
+      assert(true == std::isfinite(inValue));
+      if (lookback_period <= inSequenceNumber) [[likely]]
+      {
+         outMean = (m_sum + inValue) / period;
+         auto const meanOfSquares{(m_sumOfSquares + inValue * inValue) / period,};
+         return meanOfSquares - outMean * outMean;
+      }
+      outMean = std::numeric_limits<double>::signaling_NaN();
+      return std::numeric_limits<double>::signaling_NaN();
+   }
+
+   [[maybe_unused]] constexpr void reset() noexcept
+   {
+      m_sum = 0;
+      m_sumOfSquares = 0;
+#if (not defined(NDEBUG))
+      std::ranges::fill(m_values, std::numeric_limits<double>::signaling_NaN());
+      m_prevSequenceNumber = 0;
+#endif
+   }
+
+private:
+   double m_sum{0,};
+   double m_sumOfSquares{0,};
+   std::array<double, lookback_period> m_values{};
+#if (not defined(NDEBUG))
+   uint64_t m_prevSequenceNumber{0,};
+#endif
+
+   constexpr void do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+   {
+      m_sum += inValue;
+      m_sumOfSquares += inValue * inValue;
+      m_values[inSequenceNumber % lookback_period] = inValue;
+   }
+
+   [[nodiscard]] constexpr double do_regular_calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
+   {
+      m_sum += inValue;
+      m_sumOfSquares += inValue * inValue;
+      outMean = m_sum / period;
+      auto const meanOfSquares{m_sumOfSquares / period,};
+      auto &prevValue{m_values[inSequenceNumber % lookback_period],};
+      m_sum -= prevValue;
+      m_sumOfSquares -= prevValue * prevValue;
+      prevValue = inValue;
+      return meanOfSquares - outMean * outMean;
+   }
+};
+
+template<>
+class [[maybe_unused]] variance<static_cast<uint32_t>(-1)> final
 {
 public:
    variance() = delete;
@@ -44,7 +157,7 @@ public:
 
    [[maybe_unused, nodiscard]] double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
    {
-      double mean;
+      double mean{};
       return calc(inSequenceNumber, inValue, mean);
    }
 
@@ -62,7 +175,7 @@ public:
 
    [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
    {
-      double mean;
+      double mean{};
       return pick(inSequenceNumber, inValue, mean);
    }
 
@@ -73,14 +186,14 @@ public:
 private:
    uint32_t const m_period;
    uint32_t const m_lookbackPeriod;
+   double m_sum{0,};
+   double m_sumOfSquares{0,};
    std::unique_ptr<double[]> const m_values;
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber;
+   uint64_t m_prevSequenceNumber{0,};
 #endif
-   double m_sum;
-   double m_sumOfSquares;
 
-   [[nodiscard]] double do_lookback_calc(uint64_t inSequenceNumber, double inValue) noexcept;
+   void do_lookback_calc(uint64_t inSequenceNumber, double inValue) noexcept;
 
    [[nodiscard]] double do_regular_calc(uint64_t inSequenceNumber, double inValue, double &outMean) noexcept;
 };

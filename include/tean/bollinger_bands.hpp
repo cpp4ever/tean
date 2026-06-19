@@ -100,7 +100,7 @@ public:
 private:
    double const m_upperBandMultiplier;
    double const m_lowerBandMultiplier;
-   standard_deviation m_standardDeviation;
+   standard_deviation<> m_standardDeviation;
    moving_average m_movingAverage;
 
    [[maybe_unused, nodiscard]] result_type make_value(uint64_t const inSequenceNumber, double const inStandardDeviation, double const inMovingAverage) const noexcept
