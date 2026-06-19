@@ -41,30 +41,17 @@ jobs:
       matrix:
         build_type: [Debug, Release]
         compiler: [clang, gcc]
-        os: [macos-12, macos-13, macos-14]
+        os: [macos-latest]
         sanitizer: [ASan, TSan, UBSan]
         include:
           - compiler: clang
             cc: clang
             cxx: clang++
             standard-libraries:
-            packages: llvm@15
-          - os: macos-12
-            compiler: gcc
-            cc: gcc-11
-            cxx: g++-11
-            standard-libraries:
-            packages:
-          - os: macos-13
-            compiler: gcc
-            cc: gcc-12
-            cxx: g++-12
-            standard-libraries: -DCMAKE_CXX_STANDARD_LIBRARIES="-Wl,-ld_classic" # Use classic linker
-            packages:
-          - os: macos-14
-            compiler: gcc
-            cc: gcc-13
-            cxx: g++-13
+            packages: llvm@18
+          - compiler: gcc
+            cc: gcc-15
+            cxx: g++-15
             standard-libraries: -DCMAKE_CXX_STANDARD_LIBRARIES="-Wl,-ld_classic" # Use classic linker
             packages:
         exclude:
@@ -72,7 +59,7 @@ jobs:
             sanitizer: TSan # Not supported
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: 'recursive'
 
@@ -91,18 +78,22 @@ jobs:
         CXX: ${{matrix.cxx}}
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DSANITIZER=${{matrix.sanitizer}} ${{matrix.standard-libraries}} -G "Ninja" -S "${{github.workspace}}"
+        echo "CMAKE_BUILD_PARALLEL_LEVEL=$(sysctl -n hw.logicalcpu)" >> $GITHUB_ENV
+        cmake \
+          -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          -DCMAKE_C_COMPILER=${{matrix.cc}} \
+          -DCMAKE_CXX_COMPILER=${{matrix.cxx}} \
+          -DSANITIZER=${{matrix.sanitizer}} \
+          ${{matrix.standard-libraries}} \
+          -G "Ninja" \
+          -S ${{github.workspace}}
 
     - name: Build
       working-directory: ${{runner.workspace}}/build
       run: |
-        threads=`sysctl -n hw.logicalcpu`
-        cmake --build . --config ${{matrix.build_type}} --parallel $threads --target tests
+        cmake --build . --config ${{matrix.build_type}} --target tean_tests
 
     - name: Test
-      env:
-        CTEST_OUTPUT_ON_FAILURE: 1
       working-directory: ${{runner.workspace}}/build
       run: |
-        threads=`sysctl -n hw.logicalcpu`
-        ctest --build-config ${{matrix.build_type}} --output-on-failure --parallel $threads
+        ctest --build-config ${{matrix.build_type}} --output-on-failure

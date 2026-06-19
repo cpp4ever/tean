@@ -23,6 +23,7 @@
    SOFTWARE.
 ]]
 
+include(CMakeThirdpartyTargets)
 include(FetchContent)
 
 FetchContent_Declare(
@@ -46,3 +47,4 @@ set_target_properties(
       LIBRARY_OUTPUT_DIRECTORY "${tilib_BINARY_DIR}"
 )
 target_include_directories(tulipindicators PUBLIC "${tilib_SOURCE_DIR}")
+organize_thirdparty_target(tulipindicators thirdparty)

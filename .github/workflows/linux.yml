@@ -41,23 +41,23 @@ jobs:
       matrix:
         compiler: [clang, gcc]
         build_type: [Debug, Release]
-        os: [ubuntu-22.04]
+        os: [ubuntu-latest]
         sanitizer: [ASan, LSan, MSan, TSan, UBSan]
         include:
           - compiler: clang
-            cc: clang-15
-            cxx: clang++-15
-            packages: clang-15 libc++-15-dev libc++abi-15-dev
+            cc: clang-18
+            cxx: clang++-18
+            packages: clang-18 libc++-18-dev libc++abi-18-dev
           - compiler: gcc
-            cc: gcc-12
-            cxx: g++-12
-            packages: g++-12 libstdc++-12-dev
+            cc: gcc-14
+            cxx: g++-14
+            packages: g++-14 libstdc++-14-dev
         exclude:
           - compiler: gcc
             sanitizer: MSan # Not supported
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: 'recursive'
 
@@ -73,23 +73,23 @@ jobs:
         cmake -E make_directory ${{runner.workspace}}/build
 
     - name: Configure
-      env:
-        CC: ${{matrix.cc}}
-        CXX: ${{matrix.cxx}}
       working-directory: ${{runner.workspace}}/build
       run: |
-        cmake -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DSANITIZER=${{matrix.sanitizer}} -G "Ninja" -S "${{github.workspace}}"
+        echo "CMAKE_BUILD_PARALLEL_LEVEL=$(nproc)" >> $GITHUB_ENV
+        cmake \
+          -DCMAKE_BUILD_TYPE=${{matrix.build_type}} \
+          -DCMAKE_C_COMPILER=${{matrix.cc}} \
+          -DCMAKE_CXX_COMPILER=${{matrix.cxx}} \
+          -DSANITIZER=${{matrix.sanitizer}} \
+          -G "Ninja" \
+          -S ${{github.workspace}}
 
     - name: Build
       working-directory: ${{runner.workspace}}/build
       run: |
-        threads=`nproc`
-        cmake --build . --config ${{matrix.build_type}} --parallel $threads --target tests
+        cmake --build . --config ${{matrix.build_type}} --target tean_tests
 
     - name: Test
-      env:
-        CTEST_OUTPUT_ON_FAILURE: 1
       working-directory: ${{runner.workspace}}/build
       run: |
-        threads=`nproc`
-        ctest --build-config ${{matrix.build_type}} --output-on-failure --parallel $threads
+        ctest --build-config ${{matrix.build_type}} --output-on-failure

@@ -37,30 +37,32 @@ set(
    "${TEAN_PROJECT_SOURCE_DIR}/thirdparty/ta-lib.cmake"
    "${TEAN_PROJECT_SOURCE_DIR}/thirdparty/tulipindicators.cmake"
 )
-add_executable(tests ${TEAN_TESTS_HEADERS} ${TEAN_TESTS_SOURCES} ${TEAN_TESTS_THIRDPARTY})
-add_executable(tean::tests ALIAS tests)
+add_executable(tean_tests ${TEAN_TESTS_HEADERS} ${TEAN_TESTS_SOURCES} ${TEAN_TESTS_THIRDPARTY})
+add_executable(tean::tests ALIAS tean_tests)
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/" FILES ${TEAN_TESTS_HEADERS} ${TEAN_TESTS_SOURCES})
 source_group(TREE "${TEAN_PROJECT_SOURCE_DIR}/" FILES ${TEAN_TESTS_THIRDPARTY})
-set_target_properties(tests PROPERTIES VS_DEBUGGER_COMMAND_ARGUMENTS "--gtest_filter=*.* --gtest_break_on_failure")
-target_include_directories(tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(tests PRIVATE gmock_main ta-lib-static tean tulipindicators)
+set_target_properties(tean_tests PROPERTIES VS_DEBUGGER_COMMAND_ARGUMENTS "--gtest_filter=*.* --gtest_break_on_failure")
+target_include_directories(tean_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+target_link_libraries(tean_tests PRIVATE gmock_main ta-lib-static tean tulipindicators)
 available_cxx_sanitizers(CXX_SANITIZERS)
 list(LENGTH CXX_SANITIZERS CXX_SANITIZERS_LENGTH)
 if(CXX_SANITIZERS_LENGTH GREATER 0)
    list(GET CXX_SANITIZERS 0 DEFAULT_CXX_SANITIZER)
    set(SANITIZER ${DEFAULT_CXX_SANITIZER} CACHE STRING "Choose sanitizer for the build")
    set_property(CACHE SANITIZER PROPERTY STRINGS ${CXX_SANITIZERS})
-   if(SANITIZER STREQUAL "UBSan")
+   if(SANITIZER STREQUAL "ASan")
+      target_cxx_asan(tean_tests FLAGS check_initialization_order=true detect_stack_use_after_return=true exitcode=1)
+   elseif(SANITIZER STREQUAL "LSan")
+      target_cxx_lsan(tean_tests FLAGS detect_leaks=true exitcode=1)
+   elseif(SANITIZER STREQUAL "UBSan")
       target_cxx_ubsan(
-         tests
-         FLAGS
-            exitcode=1
-            print_stacktrace=true
-            report_error_type=true
-            silence_unsigned_overflow=true
+         tean_tests
+         FLAGS exitcode=1 print_stacktrace=true report_error_type=true
+         IGNORELIST "src:*/MacOSX.sdk/*" "src:*/_deps/*"
+         SUPPRESSIONS "shift-base:*/MacOSX.sdk/*" "shift-base:*/_deps/*"
       )
    else()
-      target_cxx_sanitizer(tests ${SANITIZER} FLAGS exitcode=1)
+      target_cxx_sanitizer(tean_tests ${SANITIZER} FLAGS exitcode=1)
    endif()
 endif()
 get_filename_component(CXX_LINKER_DIRECTORY ${CMAKE_LINKER} DIRECTORY)
@@ -70,4 +72,4 @@ if(CXX_LINKER_DIRECTORY_LENGTH GREATER 0)
 endif()
 
 include(GoogleTest)
-gtest_discover_tests(tests PROPERTIES ${TEAN_CTEST_PROPERTIES})
+gtest_discover_tests(tean_tests PROPERTIES ${TEAN_CTEST_PROPERTIES})

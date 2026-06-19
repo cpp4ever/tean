@@ -23,6 +23,7 @@
    SOFTWARE.
 ]]
 
+include(CMakeThirdpartyTargets)
 include(FetchContent)
 
 set(BUILD_GMOCK ON CACHE BOOL "Enable googlemock targets" FORCE)
@@ -40,5 +41,8 @@ FetchContent_Declare(
    GIT_TAG v1.17.0
 )
 FetchContent_MakeAvailable(googletest)
-set_property(DIRECTORY "${googletest_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL ON)
-set_target_properties(gmock_main PROPERTIES FOLDER thirdparty)
+if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+   # Enable Language Extensions (for WinAPI headers)
+   set_target_properties(gmock_main PROPERTIES CXX_EXTENSIONS ON)
+endif()
+organize_thirdparty_directory_targets("${googletest_SOURCE_DIR}" thirdparty)

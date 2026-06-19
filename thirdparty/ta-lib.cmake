@@ -23,6 +23,7 @@
    SOFTWARE.
 ]]
 
+include(CMakeThirdpartyTargets)
 include(FetchContent)
 
 set(BUILD_DEV_TOOLS OFF CACHE BOOL "Skip dev tools" FORCE)
@@ -37,5 +38,4 @@ FetchContent_Declare(
    GIT_TAG v0.6.1
 )
 FetchContent_MakeAvailable(talib)
-set_property(DIRECTORY "${talib_SOURCE_DIR}" PROPERTY EXCLUDE_FROM_ALL ON)
-set_target_properties(ta-lib-static PROPERTIES FOLDER thirdparty)
+organize_thirdparty_directory_targets("${talib_SOURCE_DIR}" thirdparty)
