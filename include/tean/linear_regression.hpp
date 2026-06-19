@@ -25,21 +25,104 @@
 
 #pragma once
 
-#include <cstdint> /// for uint32_t, uint64_t
+#include <algorithm> /// for std::ranges::fill
+#include <array> /// for std::array
+#include <cassert> /// for assert
+#include <cmath> /// for std::isfinite
+#include <cstdint> /// for int32_t, uint32_t, uint64_t
+#include <limits> /// for std::numeric_limits
 #include <memory> /// for std::unique_ptr
 
 namespace tean
 {
 
-class [[nodiscard]] linear_regression final
+struct linear_regression_result final
 {
-public:
-   struct [[maybe_unused, nodiscard]] result_type final
-   {
-      [[maybe_unused]] double intercept;
-      [[maybe_unused]] double slope;
-   };
+   double intercept{std::numeric_limits<double>::signaling_NaN(),};
+   double slope{std::numeric_limits<double>::signaling_NaN(),};
+};
 
+template<uint32_t period = static_cast<uint32_t>(-1)>
+class linear_regression;
+
+template<uint32_t period>
+class [[maybe_unused]] linear_regression final
+{
+   static_assert(1 < period);
+
+public:
+   static constexpr inline auto lookback_period{period - 1,};
+
+private:
+   static constexpr inline auto sum_x{period * lookback_period * 0.5,};
+   static constexpr inline auto sum_square_x{(period * lookback_period * (2 * period - 1)) / 6.0,};
+   static constexpr inline auto divisor{sum_x * sum_x - period * sum_square_x,};
+
+public:
+   [[maybe_unused, nodiscard]] constexpr linear_regression() noexcept
+   {
+#if (not defined(NDEBUG))
+      std::ranges::fill(m_yValues, std::numeric_limits<double>::signaling_NaN());
+#endif
+   }
+
+   linear_regression(linear_regression &&) = delete;
+   linear_regression(linear_regression const &) = delete;
+
+   linear_regression &operator = (linear_regression &&) = delete;
+   linear_regression &operator = (linear_regression const &) = delete;
+
+   [[maybe_unused, nodiscard]] constexpr linear_regression_result calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+   {
+#if (not defined(NDEBUG))
+      assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+      m_prevSequenceNumber = inSequenceNumber;
+#endif
+      assert(true == std::isfinite(inValue));
+      m_yValues[inSequenceNumber % period] = inValue;
+      if (lookback_period <= inSequenceNumber) [[likely]]
+      {
+         return do_calc(inSequenceNumber);
+      }
+      return linear_regression_result{};
+   }
+
+   [[maybe_unused]] constexpr void reset() noexcept
+   {
+#if (not defined(NDEBUG))
+      std::ranges::fill(m_yValues, std::numeric_limits<double>::signaling_NaN());
+      m_prevSequenceNumber = 0;
+#endif
+   }
+
+private:
+   std::array<double, period> m_yValues{};
+#if (not defined(NDEBUG))
+   uint64_t m_prevSequenceNumber{0,};
+#endif
+
+   [[nodiscard]] constexpr linear_regression_result do_calc(uint64_t const inSequenceNumber) const noexcept
+   {
+      double sumY{0,};
+      double sumXY{0,};
+      for (auto x{static_cast<int32_t>(period),}; 0 != x--; )
+      {
+         auto const y{m_yValues[(inSequenceNumber - x) % period],};
+         sumY += y;
+         sumXY += x * y;
+      }
+      auto const slope{(period * sumXY - sum_x * sumY) / divisor,};
+      return linear_regression_result
+      {
+         .intercept = (sumY - slope * sum_x) / period,
+         .slope = slope,
+      };
+   }
+};
+
+template<>
+class [[maybe_unused]] linear_regression<static_cast<uint32_t>(-1)> final
+{
 public:
    linear_regression() = delete;
    linear_regression(linear_regression &&) = delete;
@@ -49,7 +132,7 @@ public:
    linear_regression &operator = (linear_regression &&) = delete;
    linear_regression &operator = (linear_regression const &) = delete;
 
-   [[nodiscard]] result_type calc(uint64_t inSequenceNumber, double inValue) noexcept;
+   [[nodiscard]] linear_regression_result calc(uint64_t inSequenceNumber, double inValue) noexcept;
 
    [[maybe_unused, nodiscard]] uint32_t lookback_period() const noexcept
    {
@@ -68,12 +151,12 @@ private:
    uint32_t const m_lookbackPeriod;
    double const m_sumX;
    double const m_divisor;
-#if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber;
-#endif
    std::unique_ptr<double[]> const m_yValues;
+#if (not defined(NDEBUG))
+   uint64_t m_prevSequenceNumber{0,};
+#endif
 
-   [[nodiscard]] result_type do_calc(uint64_t inSequenceNumber) noexcept;
+   [[nodiscard]] linear_regression_result do_calc(uint64_t inSequenceNumber) noexcept;
 };
 
 }

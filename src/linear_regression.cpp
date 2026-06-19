@@ -25,12 +25,13 @@
 
 #include "tean/linear_regression.hpp" /// for tean::linear_regression
 
-#include <algorithm> /// for std::fill
+#include <algorithm> /// for std::ranges::fill
 #include <cassert> /// for assert
-#include <cmath> /// for std::isfinite, std::isnan
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for int32_t, uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 #include <memory> /// for std::make_unique
+#include <span> /// for std::span
 
 namespace tean
 {
@@ -40,73 +41,66 @@ namespace
 
 static double period_to_sum_x(uint32_t const inPeriod) noexcept
 {
-   return static_cast<double>(inPeriod * (inPeriod - 1)) * 0.5;
+   return inPeriod * (inPeriod - 1) * 0.5;
 }
 
 static double period_to_sum_square_x(uint32_t const inPeriod) noexcept
 {
-   return static_cast<double>(inPeriod * (inPeriod - 1) * (2 * inPeriod - 1)) / 6.0;
+   return (inPeriod * (inPeriod - 1) * (2 * inPeriod - 1)) / 6.0;
 }
 
 }
 
-linear_regression::linear_regression(uint32_t const inPeriod) :
-   m_period(inPeriod),
-   m_lookbackPeriod(inPeriod - 1),
-   m_sumX(period_to_sum_x(inPeriod)),
-   m_divisor(period_to_sum_x(inPeriod) * period_to_sum_x(inPeriod) - static_cast<double>(inPeriod) * period_to_sum_square_x(inPeriod)),
-#if (not defined(NDEBUG))
-   m_prevSequenceNumber(0),
-#endif
-   m_yValues(std::make_unique<double[]>(inPeriod))
+linear_regression<static_cast<uint32_t>(-1)>::linear_regression(uint32_t const inPeriod) :
+   m_period{inPeriod,},
+   m_lookbackPeriod{inPeriod - 1,},
+   m_sumX{period_to_sum_x(inPeriod),},
+   m_divisor{period_to_sum_x(inPeriod) * period_to_sum_x(inPeriod) - inPeriod * period_to_sum_square_x(inPeriod),},
+   m_yValues{std::make_unique<double[]>(inPeriod),}
 {
    assert(1 < period());
-   std::fill(m_yValues.get(), m_yValues.get() + period(), 0.0);
+#if (not defined(NDEBUG))
+   std::ranges::fill(std::span{m_yValues.get(), period(),}, std::numeric_limits<double>::signaling_NaN());
+#endif
 }
 
-linear_regression::result_type linear_regression::calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+linear_regression_result linear_regression<static_cast<uint32_t>(-1)>::calc(uint64_t const inSequenceNumber, double const inValue) noexcept
 {
 #if (not defined(NDEBUG))
    assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
    assert(true == std::isfinite(inValue));
-   assert(false == std::isnan(inValue));
    m_yValues[inSequenceNumber % period()] = inValue;
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
       return do_calc(inSequenceNumber);
    }
-   return result_type
-   {
-      .intercept = std::numeric_limits<double>::signaling_NaN(),
-      .slope = std::numeric_limits<double>::signaling_NaN(),
-   };
+   return linear_regression_result{};
 }
 
-void linear_regression::reset() noexcept
+void linear_regression<static_cast<uint32_t>(-1)>::reset() noexcept
 {
 #if (not defined(NDEBUG))
+   std::ranges::fill(std::span{m_yValues.get(), period(),}, std::numeric_limits<double>::signaling_NaN());
    m_prevSequenceNumber = 0;
 #endif
-   std::fill(m_yValues.get(), m_yValues.get() + period(), 0.0);
 }
 
-linear_regression::result_type linear_regression::do_calc(uint64_t const inSequenceNumber) noexcept
+linear_regression_result linear_regression<static_cast<uint32_t>(-1)>::do_calc(uint64_t const inSequenceNumber) noexcept
 {
-   auto sumY = 0.0;
-   auto sumXY = 0.0;
-   for (auto x = static_cast<int32_t>(period()); 0 != x--; )
+   double sumY{0,};
+   double sumXY{0,};
+   for (auto x{static_cast<int32_t>(period()),}; 0 != x--; )
    {
-      auto const y = m_yValues[(inSequenceNumber - x) % period()];
+      auto const y{m_yValues[(inSequenceNumber - x) % period()],};
       sumY += y;
-      sumXY += static_cast<double>(x) * y;
+      sumXY += x * y;
    }
-   auto const slope = (static_cast<double>(period()) * sumXY - m_sumX * sumY) / m_divisor;
-   auto const intercept = (sumY - slope * m_sumX) / static_cast<double>(period());
-   return result_type
+   auto const slope{(period() * sumXY - m_sumX * sumY) / m_divisor,};
+   return linear_regression_result
    {
-      .intercept = intercept,
+      .intercept = (sumY - slope * m_sumX) / period(),
       .slope = slope,
    };
 }
