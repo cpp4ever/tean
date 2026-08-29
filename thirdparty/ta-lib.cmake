@@ -27,15 +27,17 @@ include(CMakeThirdpartyTargets)
 include(FetchContent)
 
 set(BUILD_DEV_TOOLS OFF CACHE BOOL "Skip dev tools" FORCE)
+if(WIN32)
+   set(ENV{Platform} ${CMAKE_VS_PLATFORM_NAME})
+endif()
 FetchContent_Declare(
    talib
+   EXCLUDE_FROM_ALL
+   SYSTEM
    # Download Step Options
-   GIT_PROGRESS ON
-   GIT_REMOTE_UPDATE_STRATEGY CHECKOUT
-   GIT_REPOSITORY https://github.com/TA-Lib/ta-lib.git
-   GIT_SHALLOW ON
-   GIT_SUBMODULES_RECURSE ON
-   GIT_TAG v0.6.1
+   URL https://github.com/TA-Lib/ta-lib/archive/refs/tags/v0.7.1.tar.gz
+   URL_HASH SHA256=40e7a6978052fe5245771e430e6a4c4553b40038f8ac5a985a1540c4c1fa6ace
+   DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 FetchContent_MakeAvailable(talib)
 organize_thirdparty_directory_targets("${talib_SOURCE_DIR}" thirdparty)
