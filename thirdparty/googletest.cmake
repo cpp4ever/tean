@@ -32,13 +32,12 @@ set(INSTALL_GTEST OFF CACHE BOOL "Disable install targets" FORCE)
 set(gtest_disable_pthreads ON CACHE BOOL "Disable pthreads" FORCE)
 FetchContent_Declare(
    googletest
+   EXCLUDE_FROM_ALL
+   SYSTEM
    # Download Step Options
-   GIT_PROGRESS ON
-   GIT_REMOTE_UPDATE_STRATEGY CHECKOUT
-   GIT_REPOSITORY https://github.com/google/googletest.git
-   GIT_SHALLOW ON
-   GIT_SUBMODULES_RECURSE ON
-   GIT_TAG v1.17.0
+   URL https://github.com/google/googletest/releases/download/v1.18.0/googletest-1.18.0.tar.gz
+   URL_HASH SHA256=6e3191c1455468b3fc35a417fb565c1c5071aee1b7e7f85e30cf48a98d37d8b5
+   DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 FetchContent_MakeAvailable(googletest)
 if(CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
