@@ -27,7 +27,9 @@ include(CMakeThirdpartyTargets)
 include(FetchContent)
 
 FetchContent_Declare(
-   tilib
+   tulipindicators
+   EXCLUDE_FROM_ALL
+   SYSTEM
    # Download Step Options
    GIT_PROGRESS ON
    GIT_REMOTE_UPDATE_STRATEGY CHECKOUT
@@ -36,15 +38,15 @@ FetchContent_Declare(
    GIT_SUBMODULES_RECURSE ON
    GIT_TAG master
 )
-FetchContent_Populate(tilib)
-file(GLOB TULIPINDICATORS_HEADERS "${tilib_SOURCE_DIR}/indicators/*.h" "${tilib_SOURCE_DIR}/indicators.h")
-file(GLOB TULIPINDICATORS_SOURCES "${tilib_SOURCE_DIR}/indicators/*.c" "${tilib_SOURCE_DIR}/indicators.c")
+FetchContent_MakeAvailable(tulipindicators)
+file(GLOB TULIPINDICATORS_HEADERS "${tulipindicators_SOURCE_DIR}/indicators/*.h" "${tulipindicators_SOURCE_DIR}/indicators.h")
+file(GLOB TULIPINDICATORS_SOURCES "${tulipindicators_SOURCE_DIR}/indicators/*.c" "${tulipindicators_SOURCE_DIR}/indicators.c")
 add_library(tulipindicators STATIC ${TULIPINDICATORS_HEADERS} ${TULIPINDICATORS_SOURCES})
 set_target_properties(
    tulipindicators
    PROPERTIES
       FOLDER thirdparty
-      LIBRARY_OUTPUT_DIRECTORY "${tilib_BINARY_DIR}"
+      LIBRARY_OUTPUT_DIRECTORY "${tulipindicators_BINARY_DIR}"
 )
-target_include_directories(tulipindicators PUBLIC "${tilib_SOURCE_DIR}")
+target_include_directories(tulipindicators PUBLIC "${tulipindicators_SOURCE_DIR}")
 organize_thirdparty_target(tulipindicators thirdparty)
