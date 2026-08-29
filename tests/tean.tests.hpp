@@ -34,15 +34,12 @@
 namespace tean::tests
 {
 
-class [[nodiscard]] TeAn : public testing::Test
+class TeAn : public testing::Test
 {
 private: using super = testing::Test;
 
 public:
-   [[maybe_unused, nodiscard]] TeAn() :
-      m_randomEngine()
-   {}
-
+   [[maybe_unused, nodiscard]] TeAn() = default;
    TeAn(TeAn &&) = delete;
    TeAn(TeAn const &) = delete;
 
@@ -51,7 +48,7 @@ public:
 
    [[maybe_unused, nodiscard]] bool random_bool()
    {
-      return 1 == random_number<int>(0, 1);
+      return 1ui32 == random_number(0ui32, 1ui32);
    }
 
    template<typename type> requires(true == std::is_integral_v<type>)
@@ -73,7 +70,7 @@ protected:
    }
 
 private:
-   std::mt19937_64 m_randomEngine;
+   std::mt19937_64 m_randomEngine{};
 };
 
 }

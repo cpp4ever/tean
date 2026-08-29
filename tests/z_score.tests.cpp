@@ -31,6 +31,8 @@
 
 #include <gmock/gmock.h>
 
+#include <ranges> ///< for std::views::iota
+
 namespace tean::tests
 {
 
@@ -38,40 +40,40 @@ template<uint32_t test_period>
 void test_z_score_step(TeAn &fixture, decimal const testPriceStep)
 {
    constexpr auto testLookbackPeriod{z_score<test_period>::lookback_period,};
-   constexpr auto testIterationsNumber{test_period * 10,};
-   auto const testPricePrecision{inverted_power_of_ten[testPriceStep.scale / 3] * inverted_power_of_ten[3],};
+   constexpr auto testIterationsNumber{test_period * 10ui32,};
+   auto const testPricePrecision{inverted_power_of_ten[testPriceStep.scale / 3ui32] * inverted_power_of_ten[3ui32],};
    double const testPriceStepValue{testPriceStep,};
    {
       z_score<test_period> testIndicator{};
       standard_deviation<test_period> testAdditionalIndicator{};
-      for (uint32_t testIteration{0,}; testIteration < testLookbackPeriod; ++testIteration)
+      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2]),};
-         double testAdditionalMean{0,};
+         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2ui32]),};
+         auto testAdditionalMean{0e0,};
          auto const testAdditionalValue{testAdditionalIndicator.calc(testIteration, testPrice, testAdditionalMean),};
          ASSERT_FALSE(std::isfinite(testAdditionalMean));
          ASSERT_FALSE(std::isfinite(testAdditionalValue));
          auto const testCalcValue{testIndicator.calc(testIteration, testPrice),};
          ASSERT_FALSE(std::isfinite(testCalcValue));
       }
-      for (uint32_t testIteration{0,}; testIteration < testIterationsNumber; ++testIteration)
+      for (auto const testIteration : std::views::iota(0ui32, testIterationsNumber))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2]),};
-         double testAdditionalMean{0,};
+         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2ui32]),};
+         auto testAdditionalMean{0e0,};
          auto const testAdditionalValue{testAdditionalIndicator.calc(testLookbackPeriod + testIteration, testPrice, testAdditionalMean),};
          ASSERT_TRUE(std::isfinite(testAdditionalMean));
          ASSERT_TRUE(std::isfinite(testAdditionalValue));
          auto const testCalcValue{testIndicator.calc(testLookbackPeriod + testIteration, testPrice),};
          ASSERT_TRUE(std::isfinite(testCalcValue));
-         auto const expectedValue{(0 >= testAdditionalValue) ? 0.0 : (testPrice - testAdditionalMean) / testAdditionalValue,};
+         auto const expectedValue{(0e0 >= testAdditionalValue) ? 0e0 : ((testPrice - testAdditionalMean) / testAdditionalValue),};
          ASSERT_THAT(testCalcValue, testing::DoubleNear(expectedValue, testPricePrecision));
       }
       testIndicator.reset();
       testAdditionalIndicator.reset();
-      for (uint32_t testIteration{0,}; testIteration <= testLookbackPeriod; ++testIteration)
+      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + 1ui32))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2]),};
-         double testAdditionalMean{0,};
+         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2ui32]),};
+         auto testAdditionalMean{0e0,};
          auto const testAdditionalValue{testAdditionalIndicator.calc(testIteration, testPrice, testAdditionalMean),};
          auto const testCalcValue{testIndicator.calc(testIteration, testPrice),};
          if (testLookbackPeriod > testIteration)
@@ -85,7 +87,7 @@ void test_z_score_step(TeAn &fixture, decimal const testPriceStep)
             ASSERT_TRUE(std::isfinite(testAdditionalMean));
             ASSERT_TRUE(std::isfinite(testAdditionalValue));
             ASSERT_TRUE(std::isfinite(testCalcValue));
-            auto const expectedValue{(0 >= testAdditionalValue) ? 0.0 : (testPrice - testAdditionalMean) / testAdditionalValue,};
+            auto const expectedValue{(0e0 >= testAdditionalValue) ? 0e0 : ((testPrice - testAdditionalMean) / testAdditionalValue),};
             ASSERT_THAT(testCalcValue, testing::DoubleNear(expectedValue, testPricePrecision));
          }
       }
@@ -95,10 +97,10 @@ void test_z_score_step(TeAn &fixture, decimal const testPriceStep)
       standard_deviation<> testAdditionalIndicator{test_period,};
       ASSERT_EQ(test_period, testIndicator.period());
       ASSERT_EQ(testLookbackPeriod, testIndicator.lookback_period());
-      for (uint32_t testIteration{0,}; testIteration < (testLookbackPeriod + testIterationsNumber); ++testIteration)
+      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + testIterationsNumber))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2]),};
-         double testAdditionalMean{0,};
+         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2ui32]),};
+         auto testAdditionalMean{0e0,};
          auto const testAdditionalValue{testAdditionalIndicator.calc(testIteration, testPrice, testAdditionalMean),};
          auto const testCalcValue{testIndicator.calc(testIteration, testPrice),};
          if (testLookbackPeriod > testIteration)
@@ -112,16 +114,16 @@ void test_z_score_step(TeAn &fixture, decimal const testPriceStep)
             ASSERT_TRUE(std::isfinite(testAdditionalMean));
             ASSERT_TRUE(std::isfinite(testAdditionalValue));
             ASSERT_TRUE(std::isfinite(testCalcValue));
-            auto const expectedValue{(0 >= testAdditionalValue) ? 0.0 : (testPrice - testAdditionalMean) / testAdditionalValue,};
+            auto const expectedValue{(0e0 >= testAdditionalValue) ? 0e0 : ((testPrice - testAdditionalMean) / testAdditionalValue),};
             ASSERT_THAT(testCalcValue, testing::DoubleNear(expectedValue, testPricePrecision));
          }
       }
       testIndicator.reset();
       testAdditionalIndicator.reset();
-      for (uint32_t testIteration{0,}; testIteration <= testLookbackPeriod; ++testIteration)
+      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + 1ui32))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2]),};
-         double testAdditionalMean{0,};
+         auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2ui32]),};
+         auto testAdditionalMean{0e0,};
          auto const testAdditionalValue{testAdditionalIndicator.calc(testIteration, testPrice, testAdditionalMean),};
          auto const testCalcValue{testIndicator.calc(testIteration, testPrice),};
          if (testLookbackPeriod > testIteration)
@@ -135,7 +137,7 @@ void test_z_score_step(TeAn &fixture, decimal const testPriceStep)
             ASSERT_TRUE(std::isfinite(testAdditionalMean));
             ASSERT_TRUE(std::isfinite(testAdditionalValue));
             ASSERT_TRUE(std::isfinite(testCalcValue));
-            auto const expectedValue{(0 >= testAdditionalValue) ? 0.0 : (testPrice - testAdditionalMean) / testAdditionalValue,};
+            auto const expectedValue{(0e0 >= testAdditionalValue) ? 0e0 : ((testPrice - testAdditionalMean) / testAdditionalValue),};
             ASSERT_THAT(testCalcValue, testing::DoubleNear(expectedValue, testPricePrecision));
          }
       }
@@ -146,17 +148,17 @@ template<uint32_t test_period>
 void test_z_score(TeAn &fixture, decimal const testPriceStep)
 {
    test_z_score_step<test_period>(fixture, testPriceStep);
-   if constexpr (2 < test_period)
+   if constexpr (2ui32 < test_period)
    {
-      test_z_score<test_period - 1>(fixture, testPriceStep);
+      test_z_score<test_period - 1ui32>(fixture, testPriceStep);
    }
 }
 
 TEST_F(TeAn, ZScore)
 {
-   constexpr uint32_t testMaxPeriod{100,};
-   ASSERT_NO_FATAL_FAILURE(test_z_score<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12}));
-   ASSERT_NO_FATAL_FAILURE(test_z_score<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00}));
+   constexpr auto testMaxPeriod{100ui32,};
+   ASSERT_NO_FATAL_FAILURE(test_z_score<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0ui32]), .scale = 12ui8,}));
+   ASSERT_NO_FATAL_FAILURE(test_z_score<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6ui32]), .scale = 00ui8,}));
 }
 
 }

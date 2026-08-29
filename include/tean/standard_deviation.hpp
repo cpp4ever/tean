@@ -35,7 +35,7 @@
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1)>
+template<uint32_t period = static_cast<uint32_t>(-1i32)>
 class standard_deviation;
 
 template<uint32_t period>
@@ -84,7 +84,7 @@ private:
       if (lookback_period <= inSequenceNumber) [[likely]]
       {
          assert(true == std::isfinite(inVariance));
-         return (0 >= inVariance) ? 0.0 : std::sqrt(inVariance);
+         return (0e0 >= inVariance) ? 0e0 : std::sqrt(inVariance);
       }
       assert(false == std::isfinite(inVariance));
       return std::numeric_limits<double>::signaling_NaN();
@@ -92,7 +92,7 @@ private:
 };
 
 template<>
-class [[maybe_unused]] standard_deviation<static_cast<uint32_t>(-1)> final
+class [[maybe_unused]] standard_deviation<static_cast<uint32_t>(-1i32)> final
 {
 public:
    standard_deviation() = delete;

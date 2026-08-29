@@ -38,7 +38,7 @@ double standard_deviation<static_cast<uint32_t>(-1)>::variance_to_standard_devia
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
       assert(true == std::isfinite(inVariance));
-      return (0 >= inVariance) ? 0.0 : std::sqrt(inVariance);
+      return (0e0 >= inVariance) ? 0e0 : std::sqrt(inVariance);
    }
    assert(false == std::isfinite(inVariance));
    return std::numeric_limits<double>::signaling_NaN();

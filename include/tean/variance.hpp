@@ -29,23 +29,23 @@
 #include <array> /// for std::array
 #include <cassert> /// for assert
 #include <cmath> /// for std::isfinite
-#include <cstdint> /// for int32_t, uint32_t, uint64_t
+#include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 #include <memory> /// for std::unique_ptr
 
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1)>
+template<uint32_t period = static_cast<uint32_t>(-1i32)>
 class variance;
 
 template<uint32_t period>
 class [[maybe_unused]] variance
 {
-   static_assert(1 < period);
+   static_assert(1ui32 < period);
 
 public:
-   static constexpr inline auto lookback_period{period - 1,};
+   static constexpr inline auto lookback_period{period - 1ui32,};
 
    [[maybe_unused, nodiscard]] constexpr variance() noexcept
    {
@@ -69,7 +69,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
       m_prevSequenceNumber = inSequenceNumber;
 #endif
       assert(true == std::isfinite(inValue));
@@ -91,7 +91,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
 #endif
       assert(true == std::isfinite(inValue));
       if (lookback_period <= inSequenceNumber) [[likely]]
@@ -106,20 +106,20 @@ public:
 
    [[maybe_unused]] constexpr void reset() noexcept
    {
-      m_sum = 0;
-      m_sumOfSquares = 0;
+      m_sum = 0e0;
+      m_sumOfSquares = 0e0;
 #if (not defined(NDEBUG))
       std::ranges::fill(m_values, std::numeric_limits<double>::signaling_NaN());
-      m_prevSequenceNumber = 0;
+      m_prevSequenceNumber = 0ui64;
 #endif
    }
 
 private:
-   double m_sum{0,};
-   double m_sumOfSquares{0,};
+   double m_sum{0e0,};
+   double m_sumOfSquares{0e0,};
    std::array<double, lookback_period> m_values{};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0,};
+   uint64_t m_prevSequenceNumber{0ui64,};
 #endif
 
    constexpr void do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
@@ -144,7 +144,7 @@ private:
 };
 
 template<>
-class [[maybe_unused]] variance<static_cast<uint32_t>(-1)> final
+class [[maybe_unused]] variance<static_cast<uint32_t>(-1i32)> final
 {
 public:
    variance() = delete;
@@ -186,11 +186,11 @@ public:
 private:
    uint32_t const m_period;
    uint32_t const m_lookbackPeriod;
-   double m_sum{0,};
-   double m_sumOfSquares{0,};
+   double m_sum{0e0,};
+   double m_sumOfSquares{0e0,};
    std::unique_ptr<double[]> const m_values;
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0,};
+   uint64_t m_prevSequenceNumber{0ui64,};
 #endif
 
    void do_lookback_calc(uint64_t inSequenceNumber, double inValue) noexcept;

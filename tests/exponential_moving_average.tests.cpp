@@ -160,8 +160,8 @@ void test_exponential_moving_average(TeAn &fixture, decimal const testPriceStep)
 TEST_F(TeAn, ExponentialMovingAverage)
 {
    constexpr auto testMaxPeriod{100ui32,};
-   ASSERT_NO_FATAL_FAILURE(test_exponential_moving_average<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0ui32]), .scale = 12ui8}));
-   ASSERT_NO_FATAL_FAILURE(test_exponential_moving_average<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6ui32]), .scale = 00ui8}));
+   ASSERT_NO_FATAL_FAILURE(test_exponential_moving_average<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0ui32]), .scale = 12ui8,}));
+   ASSERT_NO_FATAL_FAILURE(test_exponential_moving_average<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6ui32]), .scale = 00ui8,}));
 }
 
 }

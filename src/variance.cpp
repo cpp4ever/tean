@@ -36,21 +36,21 @@
 namespace tean
 {
 
-variance<static_cast<uint32_t>(-1)>::variance(uint32_t const inPeriod) :
+variance<static_cast<uint32_t>(-1i32)>::variance(uint32_t const inPeriod) :
    m_period(inPeriod),
-   m_lookbackPeriod(inPeriod - 1),
-   m_values(std::make_unique<double[]>(inPeriod - 1))
+   m_lookbackPeriod(inPeriod - 1ui32),
+   m_values(std::make_unique<double[]>(inPeriod - 1ui32))
 {
-   assert(1 < period());
+   assert(1ui32 < period());
 #if (not defined(NDEBUG))
    std::ranges::fill(std::span{m_values.get(), lookback_period(),}, std::numeric_limits<double>::signaling_NaN());
 #endif
 }
 
-double variance<static_cast<uint32_t>(-1)>::calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
+double variance<static_cast<uint32_t>(-1i32)>::calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+   assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
    assert(true == std::isfinite(inValue));
@@ -63,10 +63,10 @@ double variance<static_cast<uint32_t>(-1)>::calc(uint64_t const inSequenceNumber
    return std::numeric_limits<double>::signaling_NaN();
 }
 
-double variance<static_cast<uint32_t>(-1)>::pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
+double variance<static_cast<uint32_t>(-1i32)>::pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+   assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
 #endif
    assert(true == std::isfinite(inValue));
    if (lookback_period() <= inSequenceNumber) [[likely]]
@@ -79,24 +79,24 @@ double variance<static_cast<uint32_t>(-1)>::pick(uint64_t const inSequenceNumber
    return std::numeric_limits<double>::signaling_NaN();
 }
 
-void variance<static_cast<uint32_t>(-1)>::reset() noexcept
+void variance<static_cast<uint32_t>(-1i32)>::reset() noexcept
 {
-   m_sum = 0;
-   m_sumOfSquares = 0;
+   m_sum = 0e0;
+   m_sumOfSquares = 0e0;
 #if (not defined(NDEBUG))
    std::ranges::fill(std::span{m_values.get(), lookback_period(),}, std::numeric_limits<double>::signaling_NaN());
-   m_prevSequenceNumber = 0;
+   m_prevSequenceNumber = 0ui64;
 #endif
 }
 
-void variance<static_cast<uint32_t>(-1)>::do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+void variance<static_cast<uint32_t>(-1i32)>::do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
 {
    m_sum += inValue;
    m_sumOfSquares += inValue * inValue;
    m_values[inSequenceNumber % lookback_period()] = inValue;
 }
 
-double variance<static_cast<uint32_t>(-1)>::do_regular_calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
+double variance<static_cast<uint32_t>(-1i32)>::do_regular_calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
 {
    m_sum += inValue;
    m_sumOfSquares += inValue * inValue;

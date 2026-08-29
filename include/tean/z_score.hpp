@@ -35,7 +35,7 @@
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1)>
+template<uint32_t period = static_cast<uint32_t>(-1i32)>
 class z_score;
 
 template<uint32_t period>
@@ -53,14 +53,14 @@ public:
 
    [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
    {
-      double mean{};
+      auto mean{0e0};
       auto const variance{m_variance.calc(inSequenceNumber, inValue, mean),};
       return variance_to_z_score(inSequenceNumber, inValue, mean, variance);
    }
 
    [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
    {
-      double mean{};
+      auto mean{0e0};
       auto const variance{m_variance.pick(inSequenceNumber, inValue, mean),};
       return variance_to_z_score(inSequenceNumber, inValue, mean, variance);
    }
@@ -71,7 +71,7 @@ public:
    }
 
 private:
-   variance<period> m_variance;
+   variance<period> m_variance{};
 
    [[nodiscard]] constexpr double variance_to_z_score(
       uint64_t const inSequenceNumber,
@@ -83,7 +83,7 @@ private:
       if (lookback_period <= inSequenceNumber) [[likely]]
       {
          assert(true == std::isfinite(inVariance));
-         return (0 >= inVariance) ? 0.0 : ((inValue - inMean) / std::sqrt(inVariance));
+         return (0e0 >= inVariance) ? 0e0 : ((inValue - inMean) / std::sqrt(inVariance));
       }
       assert(false == std::isfinite(inVariance));
       return std::numeric_limits<double>::signaling_NaN();
@@ -91,7 +91,7 @@ private:
 };
 
 template<>
-class [[maybe_unused]] z_score<static_cast<uint32_t>(-1)> final
+class [[maybe_unused]] z_score<static_cast<uint32_t>(-1i32)> final
 {
 public:
    z_score() = delete;
@@ -107,7 +107,7 @@ public:
 
    [[maybe_unused, nodiscard]] double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
    {
-      double mean{};
+      auto mean{0e0};
       auto const variance{m_variance.calc(inSequenceNumber, inValue, mean),};
       return variance_to_z_score(inSequenceNumber, inValue, mean, variance);
    }
@@ -124,7 +124,7 @@ public:
 
    [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
    {
-      double mean{};
+      auto mean{0e0};
       auto const variance{m_variance.pick(inSequenceNumber, inValue, mean),};
       return variance_to_z_score(inSequenceNumber, inValue, mean, variance);
    }
@@ -147,7 +147,7 @@ private:
       if (lookback_period() <= inSequenceNumber) [[likely]]
       {
          assert(true == std::isfinite(inVariance));
-         return (0 >= inVariance) ? 0.0 : ((inValue - inMean) / std::sqrt(inVariance));
+         return (0e0 >= inVariance) ? 0e0 : ((inValue - inMean) / std::sqrt(inVariance));
       }
       assert(false == std::isfinite(inVariance));
       return std::numeric_limits<double>::signaling_NaN();
