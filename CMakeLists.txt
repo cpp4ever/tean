@@ -23,7 +23,7 @@
    SOFTWARE.
 ]]
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.28)
 
 project(tean LANGUAGES C CXX)
 set(CMAKE_C_EXTENSIONS OFF)
@@ -52,5 +52,5 @@ if(TEAN_PROJECT_SOURCE_DIR STREQUAL MAIN_PROJECT_SOURCE_DIR)
    endif()
    enable_testing()
    add_subdirectory(tests)
-   set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT tests)
+   set_property(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" PROPERTY VS_STARTUP_PROJECT tean_tests)
 endif()
