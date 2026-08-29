@@ -31,66 +31,66 @@
 namespace tean::tests
 {
 
-[[maybe_unused]] constexpr std::array<uint64_t, 20> power_of_ten
+[[maybe_unused]] constexpr inline std::array<uint64_t, 20ui32> power_of_ten
 {
    {
-      1ull,
-      10ull,
-      100ull,
-      1000ull,
-      10000ull,
-      100000ull,
-      1000000ull,
-      10000000ull,
-      100000000ull,
-      1000000000ull,
-      10000000000ull,
-      100000000000ull,
-      1000000000000ull,
-      10000000000000ull,
-      100000000000000ull,
-      1000000000000000ull,
-      10000000000000000ull,
-      100000000000000000ull,
-      1000000000000000000ull,
-      10000000000000000000ull,
+      1ui64,
+      10ui64,
+      100ui64,
+      1000ui64,
+      10000ui64,
+      100000ui64,
+      1000000ui64,
+      10000000ui64,
+      100000000ui64,
+      1000000000ui64,
+      10000000000ui64,
+      100000000000ui64,
+      1000000000000ui64,
+      10000000000000ui64,
+      100000000000000ui64,
+      1000000000000000ui64,
+      10000000000000000ui64,
+      100000000000000000ui64,
+      1000000000000000000ui64,
+      10000000000000000000ui64,
    },
 };
 
-[[maybe_unused]] constexpr std::array<double, 20> inverted_power_of_ten
+[[maybe_unused]] constexpr inline std::array<double, 20ui32> inverted_power_of_ten
 {
    {
-      1.0E-00,
-      1.0E-01,
-      1.0E-02,
-      1.0E-03,
-      1.0E-04,
-      1.0E-05,
-      1.0E-06,
-      1.0E-07,
-      1.0E-08,
-      1.0E-09,
-      1.0E-10,
-      1.0E-11,
-      1.0E-12,
-      1.0E-13,
-      1.0E-14,
-      1.0E-15,
-      1.0E-16,
-      1.0E-17,
-      1.0E-18,
-      1.0E-19,
+      1e-00,
+      1e-01,
+      1e-02,
+      1e-03,
+      1e-04,
+      1e-05,
+      1e-06,
+      1e-07,
+      1e-08,
+      1e-09,
+      1e-10,
+      1e-11,
+      1e-12,
+      1e-13,
+      1e-14,
+      1e-15,
+      1e-16,
+      1e-17,
+      1e-18,
+      1e-19,
    },
 };
 
-struct [[maybe_unused, nodiscard]] decimal
+struct [[maybe_unused]] decimal
 {
-   int64_t value = 0;
-   uint8_t scale = 0;
+   int64_t value{0ui64,};
+   uint8_t scale{0ui8,};
 
    [[maybe_unused, nodiscard]] explicit operator double() const
    {
-      return static_cast<double>(value) * inverted_power_of_ten[scale];
+      return value * inverted_power_of_ten[scale];
    }
 };
 

@@ -25,18 +25,110 @@
 
 #pragma once
 
+#include <cassert> /// for assert
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for uint32_t, uint64_t
+#include <limits> /// for std::numeric_limits
 
 namespace tean
 {
 
-class [[nodiscard]] exponential_moving_average final
+template<uint32_t period = static_cast<uint32_t>(-1i32), uint32_t untrusted_period = period>
+class exponential_moving_average;
+
+template<uint32_t period, uint32_t untrusted_period>
+class [[maybe_unused]] exponential_moving_average
+{
+   static_assert(1ui32 < period);
+   static_assert(static_cast<uint32_t>(-1i32) != period);
+   static_assert(static_cast<uint32_t>(-1i32) != untrusted_period);
+
+public:
+   static constexpr inline auto lookback_period{untrusted_period + period - 1ui32,};
+
+   exponential_moving_average(exponential_moving_average &&) = delete;
+   exponential_moving_average(exponential_moving_average const &) = delete;
+
+   [[maybe_unused, nodiscard]] constexpr explicit exponential_moving_average(double const inSmoothing = 2e0) noexcept :
+      m_smoothingFactor(inSmoothing / (period + 1ui32))
+   {
+      assert(true == std::isfinite(m_smoothingFactor));
+   }
+
+   exponential_moving_average &operator = (exponential_moving_average &&) = delete;
+   exponential_moving_average &operator = (exponential_moving_average const &) = delete;
+
+   [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+   {
+#if (not defined(NDEBUG))
+      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+      m_prevSequenceNumber = inSequenceNumber;
+#endif
+      assert(true == std::isfinite(inValue));
+      if (period <= inSequenceNumber) [[likely]]
+      {
+         m_value += m_smoothingFactor * (inValue - m_value);
+         if (lookback_period <= inSequenceNumber) [[likely]]
+         {
+            return m_value;
+         }
+      }
+      else
+      {
+         m_value += inValue;
+         if (period == (inSequenceNumber + 1ui64))
+         {
+            m_value /= period;
+            if (lookback_period == inSequenceNumber)
+            {
+               return m_value;
+            }
+         }
+      }
+      return std::numeric_limits<double>::signaling_NaN();
+   }
+
+   [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
+   {
+#if (not defined(NDEBUG))
+      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+#endif
+      assert(true == std::isfinite(inValue));
+      if ((period <= inSequenceNumber) && (lookback_period <= inSequenceNumber)) [[likely]]
+      {
+         return m_value + m_smoothingFactor * (inValue - m_value);
+      }
+      if ((period == (inSequenceNumber + 1ui64)) && (lookback_period == inSequenceNumber))
+      {
+         return (m_value + inValue) / period;
+      }
+      return std::numeric_limits<double>::signaling_NaN();
+   }
+
+   [[maybe_unused]] constexpr void reset() noexcept
+   {
+      m_value = 0e0;
+#if (not defined(NDEBUG))
+      m_prevSequenceNumber = 0ui64;
+#endif
+   }
+
+private:
+   double const m_smoothingFactor;
+   double m_value{0e0,};
+#if (not defined(NDEBUG))
+   uint64_t m_prevSequenceNumber{0ui64,};
+#endif
+};
+
+template<>
+class [[maybe_unused]] exponential_moving_average<static_cast<uint32_t>(-1i32), static_cast<uint32_t>(-1i32)> final
 {
 public:
    exponential_moving_average() = delete;
    exponential_moving_average(exponential_moving_average &&) = delete;
    exponential_moving_average(exponential_moving_average const &) = delete;
-   [[nodiscard]] exponential_moving_average(uint32_t inPeriod, uint32_t inUntrustedPeriod, double inSmoothing = 2.0) noexcept;
+   [[nodiscard]] exponential_moving_average(uint32_t inPeriod, uint32_t inUntrustedPeriod, double inSmoothing = 2e0) noexcept;
 
    exponential_moving_average &operator = (exponential_moving_average &&) = delete;
    exponential_moving_average &operator = (exponential_moving_average const &) = delete;
@@ -57,20 +149,25 @@ public:
 
    [[maybe_unused]] void reset() noexcept
    {
+      m_value = 0e0;
 #if (not defined(NDEBUG))
-      m_prevSequenceNumber = 0;
+      m_prevSequenceNumber = 0ui64;
 #endif
-      m_value = 0.0;
+   }
+
+   [[maybe_unused, nodiscard]] double value() const noexcept
+   {
+      return m_value;
    }
 
 private:
    uint32_t const m_period;
    uint32_t const m_lookbackPeriod;
    double const m_smoothingFactor;
+   double m_value{0e0,};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber;
+   uint64_t m_prevSequenceNumber{0ui64,};
 #endif
-   double m_value;
 };
 
 }
