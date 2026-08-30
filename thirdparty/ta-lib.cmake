@@ -27,8 +27,9 @@ include(CMakeThirdpartyTargets)
 include(FetchContent)
 
 set(BUILD_DEV_TOOLS OFF CACHE BOOL "Skip dev tools" FORCE)
-if(WIN32)
-   set(ENV{Platform} ${CMAKE_VS_PLATFORM_NAME})
+if(WIN32 AND NOT DEFINED ENV{Platform})
+   string(TOLOWER ${CMAKE_VS_PLATFORM_NAME_DEFAULT} TEAN_VS_PLATFORM_NAME)
+   set(ENV{Platform} ${TEAN_VS_PLATFORM_NAME})
 endif()
 FetchContent_Declare(
    talib
