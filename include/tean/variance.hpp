@@ -36,16 +36,16 @@
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1i32)>
+template<uint32_t period = static_cast<uint32_t>(-1)>
 class variance;
 
 template<uint32_t period>
 class [[maybe_unused]] variance
 {
-   static_assert(1ui32 < period);
+   static_assert(1u < period);
 
 public:
-   static constexpr inline auto lookback_period{period - 1ui32,};
+   static constexpr inline auto lookback_period{period - 1u,};
 
    [[maybe_unused, nodiscard]] constexpr variance() noexcept
    {
@@ -69,7 +69,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
       m_prevSequenceNumber = inSequenceNumber;
 #endif
       assert(true == std::isfinite(inValue));
@@ -91,7 +91,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
 #endif
       assert(true == std::isfinite(inValue));
       if (lookback_period <= inSequenceNumber) [[likely]]
@@ -110,7 +110,7 @@ public:
       m_sumOfSquares = 0e0;
 #if (not defined(NDEBUG))
       std::ranges::fill(m_values, std::numeric_limits<double>::signaling_NaN());
-      m_prevSequenceNumber = 0ui64;
+      m_prevSequenceNumber = 0ull;
 #endif
    }
 
@@ -119,7 +119,7 @@ private:
    double m_sumOfSquares{0e0,};
    std::array<double, lookback_period> m_values{};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ui64,};
+   uint64_t m_prevSequenceNumber{0ull,};
 #endif
 
    constexpr void do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
@@ -144,7 +144,7 @@ private:
 };
 
 template<>
-class [[maybe_unused]] variance<static_cast<uint32_t>(-1i32)> final
+class [[maybe_unused]] variance<static_cast<uint32_t>(-1)> final
 {
 public:
    variance() = delete;
@@ -190,7 +190,7 @@ private:
    double m_sumOfSquares{0e0,};
    std::unique_ptr<double[]> const m_values;
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ui64,};
+   uint64_t m_prevSequenceNumber{0ull,};
 #endif
 
    void do_lookback_calc(uint64_t inSequenceNumber, double inValue) noexcept;

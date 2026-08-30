@@ -51,7 +51,7 @@ template<typename moving_average>
 class bollinger_bands_test_traits;
 
 template<>
-class [[nodiscard]] bollinger_bands_test_traits<exponential_moving_average> final
+class [[nodiscard]] bollinger_bands_test_traits<exponential_moving_average<>> final
 {
 public: static constexpr TA_MAType ta_ma_type = TA_MAType::TA_MAType_EMA;
 
@@ -67,10 +67,10 @@ public:
    bollinger_bands_test_traits &operator = (bollinger_bands_test_traits &&) = delete;
    bollinger_bands_test_traits &operator = (bollinger_bands_test_traits const &) = delete;
 
-   [[nodiscard]] std::unique_ptr<bollinger_bands<exponential_moving_average>> create_indicator(uint32_t const period, double const upperBandMultiplier, double const lowerBandMultiplier)
+   [[nodiscard]] std::unique_ptr<bollinger_bands<exponential_moving_average<>>> create_indicator(uint32_t const period, double const upperBandMultiplier, double const lowerBandMultiplier)
    {
       TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, static_cast<int>(m_unstablePeriod));
-      return std::make_unique<bollinger_bands<exponential_moving_average>>(period, upperBandMultiplier, lowerBandMultiplier, m_unstablePeriod);
+      return std::make_unique<bollinger_bands<exponential_moving_average<>>>(period, upperBandMultiplier, lowerBandMultiplier, m_unstablePeriod);
    }
 
 private:
@@ -226,7 +226,7 @@ TEST_F(TeAn, BollingerBands)
          decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12},
          testBandMultiplier,
          testBandMultiplier,
-         bollinger_bands_test_traits<exponential_moving_average>{random_number<uint32_t>(0, 10)}
+         bollinger_bands_test_traits<exponential_moving_average<>>{random_number<uint32_t>(0, 10)}
       )
    );
    ASSERT_NO_FATAL_FAILURE(
@@ -234,7 +234,7 @@ TEST_F(TeAn, BollingerBands)
          decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00},
          testBandMultiplier,
          testBandMultiplier,
-         bollinger_bands_test_traits<exponential_moving_average>{random_number<uint32_t>(0, 10)}
+         bollinger_bands_test_traits<exponential_moving_average<>>{random_number<uint32_t>(0, 10)}
       )
    );
    ASSERT_NO_FATAL_FAILURE(

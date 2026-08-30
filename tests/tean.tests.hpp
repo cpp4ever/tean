@@ -48,7 +48,7 @@ public:
 
    [[maybe_unused, nodiscard]] bool random_bool()
    {
-      return 1ui32 == random_number(0ui32, 1ui32);
+      return 1u == random_number(0u, 1u);
    }
 
    template<typename type> requires(true == std::is_integral_v<type>)

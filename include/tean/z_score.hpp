@@ -35,7 +35,7 @@
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1i32)>
+template<uint32_t period = static_cast<uint32_t>(-1)>
 class z_score;
 
 template<uint32_t period>
@@ -91,7 +91,7 @@ private:
 };
 
 template<>
-class [[maybe_unused]] z_score<static_cast<uint32_t>(-1i32)> final
+class [[maybe_unused]] z_score<static_cast<uint32_t>(-1)> final
 {
 public:
    z_score() = delete;

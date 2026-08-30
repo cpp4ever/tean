@@ -43,20 +43,20 @@ struct linear_regression_result final
    double slope{std::numeric_limits<double>::signaling_NaN(),};
 };
 
-template<uint32_t period = static_cast<uint32_t>(-1i32)>
+template<uint32_t period = static_cast<uint32_t>(-1)>
 class linear_regression;
 
 template<uint32_t period>
 class [[maybe_unused]] linear_regression final
 {
-   static_assert(1ui32 < period);
+   static_assert(1u < period);
 
 public:
-   static constexpr inline auto lookback_period{period - 1ui32,};
+   static constexpr inline auto lookback_period{period - 1u,};
 
 private:
    static constexpr inline auto sum_x{period * lookback_period * 5e-1,};
-   static constexpr inline auto sum_square_x{(period * lookback_period * (2ui32 * period - 1ui32)) / 6e0,};
+   static constexpr inline auto sum_square_x{(period * lookback_period * (2u * period - 1u)) / 6e0,};
    static constexpr inline auto divisor{sum_x * sum_x - period * sum_square_x,};
 
 public:
@@ -76,7 +76,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr linear_regression_result calc(uint64_t const inSequenceNumber, double const inValue) noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
       m_prevSequenceNumber = inSequenceNumber;
 #endif
       assert(true == std::isfinite(inValue));
@@ -92,21 +92,21 @@ public:
    {
 #if (not defined(NDEBUG))
       std::ranges::fill(m_yValues, std::numeric_limits<double>::signaling_NaN());
-      m_prevSequenceNumber = 0ui64;
+      m_prevSequenceNumber = 0ull;
 #endif
    }
 
 private:
    std::array<double, period> m_yValues{};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ui64,};
+   uint64_t m_prevSequenceNumber{0ull,};
 #endif
 
    [[nodiscard]] constexpr linear_regression_result do_calc(uint64_t const inSequenceNumber) const noexcept
    {
       double sumY{0e0,};
       double sumXY{0e0,};
-      for (auto const x : std::views::iota(0ui32, period) | std::views::reverse)
+      for (auto const x : std::views::iota(0u, period) | std::views::reverse)
       {
          auto const y{m_yValues[(inSequenceNumber - x) % period],};
          sumY += y;
@@ -122,7 +122,7 @@ private:
 };
 
 template<>
-class [[maybe_unused]] linear_regression<static_cast<uint32_t>(-1i32)> final
+class [[maybe_unused]] linear_regression<static_cast<uint32_t>(-1)> final
 {
 public:
    linear_regression() = delete;
@@ -154,7 +154,7 @@ private:
    double const m_divisor;
    std::unique_ptr<double[]> const m_yValues;
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ui64,};
+   uint64_t m_prevSequenceNumber{0ull,};
 #endif
 
    [[nodiscard]] linear_regression_result do_calc(uint64_t inSequenceNumber) noexcept;

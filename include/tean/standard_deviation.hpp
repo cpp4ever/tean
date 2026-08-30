@@ -35,7 +35,7 @@
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1i32)>
+template<uint32_t period = static_cast<uint32_t>(-1)>
 class standard_deviation;
 
 template<uint32_t period>
@@ -92,7 +92,7 @@ private:
 };
 
 template<>
-class [[maybe_unused]] standard_deviation<static_cast<uint32_t>(-1i32)> final
+class [[maybe_unused]] standard_deviation<static_cast<uint32_t>(-1)> final
 {
 public:
    standard_deviation() = delete;

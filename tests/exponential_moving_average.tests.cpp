@@ -32,6 +32,8 @@
 #include <gtest/gtest.h> /// for ASSERT_DOUBLE_EQ, ASSERT_EQ, ASSERT_FALSE, ASSERT_NO_FATAL_FAILURE, ASSERT_TRUE
 #include <ta_func.h> /// for TA_EMA, TA_EMA_Lookback, TA_FUNC_UNST_EMA, TA_SetUnstablePeriod, TA_SUCCESS
 
+#include <cmath> /// for std::isfinite
+#include <cstdint> /// for int64_t, uint32_t
 #include <memory> /// for std::addressof, std::make_unique
 #include <ranges> ///< for std::views::iota
 #include <vector> /// for std::vector
@@ -43,24 +45,24 @@ template<uint32_t test_period>
 void test_exponential_moving_average_step(TeAn &fixture, decimal const testPriceStep)
 {
    constexpr auto testLookbackPeriod{exponential_moving_average<test_period, test_period>::lookback_period,};
-   constexpr auto testIterationsNumber{test_period * 10ui32,};
+   constexpr auto testIterationsNumber{test_period * 10u,};
    auto const testPrices{std::make_unique<double[]>(testLookbackPeriod + testIterationsNumber),};
    auto const testValues{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};
    {
       double const testPriceStepValue{testPriceStep,};
       exponential_moving_average<test_period, test_period> testIndicator{};
-      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod))
+      for (auto const testIteration : std::views::iota(0u, testLookbackPeriod))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number(100ui32, 1000ui32),};
+         auto const testPrice{testPriceStepValue * fixture.random_number(100u, 1000u),};
          auto const testPickValue{testIndicator.pick(testIteration, testPrice),};
          ASSERT_FALSE(std::isfinite(testPickValue));
          auto const testCalcValue{testIndicator.calc(testIteration, testPrice),};
          ASSERT_FALSE(std::isfinite(testCalcValue));
          testPrices[testIteration] = testPrice;
       }
-      for (auto const testIteration : std::views::iota(0ui32, testIterationsNumber))
+      for (auto const testIteration : std::views::iota(0u, testIterationsNumber))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number(100ui32, 1000ui32),};
+         auto const testPrice{testPriceStepValue * fixture.random_number(100u, 1000u),};
          auto const testPickValue{testIndicator.pick(testLookbackPeriod + testIteration, testPrice),};
          ASSERT_TRUE(std::isfinite(testPickValue));
          auto const testCalcValue{testIndicator.calc(testLookbackPeriod + testIteration, testPrice),};
@@ -75,11 +77,11 @@ void test_exponential_moving_average_step(TeAn &fixture, decimal const testPrice
       {
          ASSERT_EQ(TA_SetUnstablePeriod(TA_FUNC_UNST_EMA, static_cast<int>(test_period)), TA_SUCCESS);
          ASSERT_EQ(TA_EMA_Lookback(static_cast<int>(test_period)), static_cast<int>(testLookbackPeriod));
-         auto expectedFirstIndex{0i32,};
-         auto expectedNumberOfElements{0i32,};
+         auto expectedFirstIndex{0,};
+         auto expectedNumberOfElements{0,};
          ASSERT_EQ(TA_EMA(
-            0i32,
-            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1i32,
+            0,
+            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1,
             testPrices.get(),
             static_cast<int>(test_period),
             std::addressof(expectedFirstIndex),
@@ -90,7 +92,7 @@ void test_exponential_moving_average_step(TeAn &fixture, decimal const testPrice
          ASSERT_EQ(expectedNumberOfElements, static_cast<int>(testIterationsNumber));
          ASSERT_THAT(expectedValues, testMatcher);
          testIndicator.reset();
-         for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod))
+         for (auto const testIteration : std::views::iota(0u, testLookbackPeriod))
          {
             auto const testPrice{testPrices[testIteration],};
             auto const testPickValue{testIndicator.pick(testIteration, testPrice),};
@@ -105,7 +107,7 @@ void test_exponential_moving_average_step(TeAn &fixture, decimal const testPrice
             auto const testCalcValue{testIndicator.calc(testLookbackPeriod, testPrice),};
             ASSERT_TRUE(std::isfinite(testCalcValue));
             ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
-            ASSERT_DOUBLE_EQ(expectedValues[0ui32], testCalcValue);
+            ASSERT_DOUBLE_EQ(expectedValues[0u], testCalcValue);
          }
       }
    }
@@ -113,7 +115,7 @@ void test_exponential_moving_average_step(TeAn &fixture, decimal const testPrice
       exponential_moving_average<> testIndicator{test_period, test_period,};
       ASSERT_EQ(test_period, testIndicator.period());
       ASSERT_EQ(testLookbackPeriod, testIndicator.lookback_period());
-      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + testIterationsNumber))
+      for (auto const testIteration : std::views::iota(0u, testLookbackPeriod + testIterationsNumber))
       {
          auto const testPickValue{testIndicator.pick(testIteration, testPrices[testIteration]),};
          auto const testCalcValue{testIndicator.calc(testIteration, testPrices[testIteration]),};
@@ -129,7 +131,7 @@ void test_exponential_moving_average_step(TeAn &fixture, decimal const testPrice
          }
       }
       testIndicator.reset();
-      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + 1ui32))
+      for (auto const testIteration : std::views::iota(0u, testLookbackPeriod + 1u))
       {
          auto const testPickValue{testIndicator.pick(testIteration, testPrices[testIteration]),};
          auto const testCalcValue{testIndicator.calc(testIteration, testPrices[testIteration]),};
@@ -151,17 +153,17 @@ template<uint32_t test_period>
 void test_exponential_moving_average(TeAn &fixture, decimal const testPriceStep)
 {
    test_exponential_moving_average_step<test_period>(fixture, testPriceStep);
-   if constexpr (2ui32 < test_period)
+   if constexpr (2u < test_period)
    {
-      test_exponential_moving_average<test_period - 1ui32>(fixture, testPriceStep);
+      test_exponential_moving_average<test_period - 1u>(fixture, testPriceStep);
    }
 }
 
 TEST_F(TeAn, ExponentialMovingAverage)
 {
-   constexpr auto testMaxPeriod{100ui32,};
-   ASSERT_NO_FATAL_FAILURE(test_exponential_moving_average<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0ui32]), .scale = 12ui8,}));
-   ASSERT_NO_FATAL_FAILURE(test_exponential_moving_average<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6ui32]), .scale = 00ui8,}));
+   constexpr auto testMaxPeriod{100u,};
+   ASSERT_NO_FATAL_FAILURE(test_exponential_moving_average<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 12,}));
+   ASSERT_NO_FATAL_FAILURE(test_exponential_moving_average<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale =  0,}));
 }
 
 }

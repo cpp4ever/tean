@@ -33,24 +33,24 @@
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1i32), uint32_t untrusted_period = period>
+template<uint32_t period = static_cast<uint32_t>(-1), uint32_t untrusted_period = period>
 class exponential_moving_average;
 
 template<uint32_t period, uint32_t untrusted_period>
 class [[maybe_unused]] exponential_moving_average
 {
-   static_assert(1ui32 < period);
-   static_assert(static_cast<uint32_t>(-1i32) != period);
-   static_assert(static_cast<uint32_t>(-1i32) != untrusted_period);
+   static_assert(1u < period);
+   static_assert(static_cast<uint32_t>(-1) != period);
+   static_assert(static_cast<uint32_t>(-1) != untrusted_period);
 
 public:
-   static constexpr inline auto lookback_period{untrusted_period + period - 1ui32,};
+   static constexpr inline auto lookback_period{untrusted_period + period - 1u,};
 
    exponential_moving_average(exponential_moving_average &&) = delete;
    exponential_moving_average(exponential_moving_average const &) = delete;
 
    [[maybe_unused, nodiscard]] constexpr explicit exponential_moving_average(double const inSmoothing = 2e0) noexcept :
-      m_smoothingFactor(inSmoothing / (period + 1ui32))
+      m_smoothingFactor(inSmoothing / (period + 1u))
    {
       assert(true == std::isfinite(m_smoothingFactor));
    }
@@ -61,7 +61,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
       m_prevSequenceNumber = inSequenceNumber;
 #endif
       assert(true == std::isfinite(inValue));
@@ -76,7 +76,7 @@ public:
       else
       {
          m_value += inValue;
-         if (period == (inSequenceNumber + 1ui64))
+         if (period == (inSequenceNumber + 1ull))
          {
             m_value /= period;
             if (lookback_period == inSequenceNumber)
@@ -91,14 +91,14 @@ public:
    [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
 #endif
       assert(true == std::isfinite(inValue));
       if ((period <= inSequenceNumber) && (lookback_period <= inSequenceNumber)) [[likely]]
       {
          return m_value + m_smoothingFactor * (inValue - m_value);
       }
-      if ((period == (inSequenceNumber + 1ui64)) && (lookback_period == inSequenceNumber))
+      if ((period == (inSequenceNumber + 1ull)) && (lookback_period == inSequenceNumber))
       {
          return (m_value + inValue) / period;
       }
@@ -109,7 +109,7 @@ public:
    {
       m_value = 0e0;
 #if (not defined(NDEBUG))
-      m_prevSequenceNumber = 0ui64;
+      m_prevSequenceNumber = 0ull;
 #endif
    }
 
@@ -117,12 +117,12 @@ private:
    double const m_smoothingFactor;
    double m_value{0e0,};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ui64,};
+   uint64_t m_prevSequenceNumber{0ull,};
 #endif
 };
 
 template<>
-class [[maybe_unused]] exponential_moving_average<static_cast<uint32_t>(-1i32), static_cast<uint32_t>(-1i32)> final
+class [[maybe_unused]] exponential_moving_average<static_cast<uint32_t>(-1), static_cast<uint32_t>(-1)> final
 {
 public:
    exponential_moving_average() = delete;
@@ -151,7 +151,7 @@ public:
    {
       m_value = 0e0;
 #if (not defined(NDEBUG))
-      m_prevSequenceNumber = 0ui64;
+      m_prevSequenceNumber = 0ull;
 #endif
    }
 
@@ -166,7 +166,7 @@ private:
    double const m_smoothingFactor;
    double m_value{0e0,};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ui64,};
+   uint64_t m_prevSequenceNumber{0ull,};
 #endif
 };
 

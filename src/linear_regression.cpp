@@ -42,33 +42,33 @@ namespace
 
 static double period_to_sum_x(uint32_t const inPeriod) noexcept
 {
-   return inPeriod * (inPeriod - 1ui32) * 5e-1;
+   return inPeriod * (inPeriod - 1u) * 5e-1;
 }
 
 static double period_to_sum_square_x(uint32_t const inPeriod) noexcept
 {
-   return (inPeriod * (inPeriod - 1ui32) * (2ui32 * inPeriod - 1ui32)) / 6e0;
+   return (inPeriod * (inPeriod - 1u) * (2u * inPeriod - 1u)) / 6e0;
 }
 
 }
 
-linear_regression<static_cast<uint32_t>(-1i32)>::linear_regression(uint32_t const inPeriod) :
+linear_regression<static_cast<uint32_t>(-1)>::linear_regression(uint32_t const inPeriod) :
    m_period{inPeriod,},
-   m_lookbackPeriod{inPeriod - 1ui32,},
+   m_lookbackPeriod{inPeriod - 1u,},
    m_sumX{period_to_sum_x(inPeriod),},
    m_divisor{period_to_sum_x(inPeriod) * period_to_sum_x(inPeriod) - inPeriod * period_to_sum_square_x(inPeriod),},
    m_yValues{std::make_unique<double[]>(inPeriod),}
 {
-   assert(1ui32 < period());
+   assert(1u < period());
 #if (not defined(NDEBUG))
    std::ranges::fill(std::span{m_yValues.get(), period(),}, std::numeric_limits<double>::signaling_NaN());
 #endif
 }
 
-linear_regression_result linear_regression<static_cast<uint32_t>(-1i32)>::calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+linear_regression_result linear_regression<static_cast<uint32_t>(-1)>::calc(uint64_t const inSequenceNumber, double const inValue) noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+   assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
    assert(true == std::isfinite(inValue));
@@ -80,19 +80,19 @@ linear_regression_result linear_regression<static_cast<uint32_t>(-1i32)>::calc(u
    return linear_regression_result{};
 }
 
-void linear_regression<static_cast<uint32_t>(-1i32)>::reset() noexcept
+void linear_regression<static_cast<uint32_t>(-1)>::reset() noexcept
 {
 #if (not defined(NDEBUG))
    std::ranges::fill(std::span{m_yValues.get(), period(),}, std::numeric_limits<double>::signaling_NaN());
-   m_prevSequenceNumber = 0ui64;
+   m_prevSequenceNumber = 0ull;
 #endif
 }
 
-linear_regression_result linear_regression<static_cast<uint32_t>(-1i32)>::do_calc(uint64_t const inSequenceNumber) noexcept
+linear_regression_result linear_regression<static_cast<uint32_t>(-1)>::do_calc(uint64_t const inSequenceNumber) noexcept
 {
    auto sumY{0e0,};
    auto sumXY{0e0,};
-   for (auto const x : std::views::iota(0ui32, period()) | std::views::reverse)
+   for (auto const x : std::views::iota(0u, period()) | std::views::reverse)
    {
       auto const y{m_yValues[(inSequenceNumber - x) % period()],};
       sumY += y;

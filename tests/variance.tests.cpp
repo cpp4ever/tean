@@ -35,6 +35,8 @@
 #include <ta_func.h> /// for TA_SUCCESS, TA_VAR, TA_VAR_Lookback
 
 #include <algorithm> /// for std::ranges::fill
+#include <cmath> /// for std::isfinite
+#include <cstdint> /// for int64_t, uint32_t
 #include <memory> /// for std::addressof, std::make_unique
 #include <ranges> ///< for std::views::iota
 #include <vector> /// for std::vector
@@ -46,18 +48,18 @@ template<uint32_t test_period>
 void test_variance_step(TeAn &fixture, decimal const testPriceStep)
 {
    constexpr auto testLookbackPeriod{variance<test_period>::lookback_period,};
-   constexpr auto testIterationsNumber{test_period * 10ui32,};
+   constexpr auto testIterationsNumber{test_period * 10u,};
    auto const testPrices{std::make_unique<double[]>(testLookbackPeriod + testIterationsNumber),};
    auto const testValues{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};
    {
       variance<test_period> testIndicator{};
-      auto const testPricePrecision{inverted_power_of_ten[testPriceStep.scale / 3ui32] * inverted_power_of_ten[1ui32],};
+      auto const testPricePrecision{inverted_power_of_ten[testPriceStep.scale / 3u] * inverted_power_of_ten[1u],};
       double const testPriceStepValue{testPriceStep,};
       {
          tean::simple_moving_average testAdditionalIndicator{test_period};
-         for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod))
+         for (auto const testIteration : std::views::iota(0u, testLookbackPeriod))
          {
-            auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 1ui32]),};
+            auto const testPrice{testPriceStepValue * fixture.random_number(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 1u]),};
             [[maybe_unused]] auto const testAdditionalValue{testAdditionalIndicator.calc(testIteration, testPrice),};
             auto testPickAdditionalValue{0e0,};
             auto const testPickValue{testIndicator.pick(testIteration, testPrice, testPickAdditionalValue),};
@@ -69,9 +71,9 @@ void test_variance_step(TeAn &fixture, decimal const testPriceStep)
             ASSERT_FALSE(std::isfinite(testCalcValue));
             testPrices[testIteration] = testPrice;
          }
-         for (auto const testIteration : std::views::iota(0ui32, testIterationsNumber))
+         for (auto const testIteration : std::views::iota(0u, testIterationsNumber))
          {
-            auto const testPrice{testPriceStepValue * fixture.random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 1ui32]),};
+            auto const testPrice{testPriceStepValue * fixture.random_number(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 1u]),};
             auto const testAdditionalValue{testAdditionalIndicator.calc(testLookbackPeriod + testIteration, testPrice),};
             auto testPickAdditionalValue{0e0,};
             auto const testPickValue{testIndicator.pick(testLookbackPeriod + testIteration, testPrice, testPickAdditionalValue),};
@@ -94,11 +96,11 @@ void test_variance_step(TeAn &fixture, decimal const testPriceStep)
       expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
       {
          ASSERT_EQ(TA_VAR_Lookback(static_cast<int>(test_period), 1e0), static_cast<int>(testLookbackPeriod));
-         auto expectedFirstIndex{0i32,};
-         auto expectedNumberOfElements{0i32,};
+         auto expectedFirstIndex{0,};
+         auto expectedNumberOfElements{0,};
          ASSERT_EQ(TA_VAR(
-            0i32,
-            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1i32,
+            0,
+            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1,
             testPrices.get(),
             static_cast<int>(test_period),
             1e0,
@@ -110,7 +112,7 @@ void test_variance_step(TeAn &fixture, decimal const testPriceStep)
          ASSERT_EQ(expectedNumberOfElements, static_cast<int>(testIterationsNumber));
          ASSERT_THAT(expectedValues, testMatcher);
          testIndicator.reset();
-         for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod))
+         for (auto const testIteration : std::views::iota(0u, testLookbackPeriod))
          {
             auto const testPrice{testPrices[testIteration],};
             auto const testPickValue{testIndicator.pick(testIteration, testPrice),};
@@ -125,7 +127,7 @@ void test_variance_step(TeAn &fixture, decimal const testPriceStep)
             auto const testCalcValue{testIndicator.calc(testLookbackPeriod, testPrice),};
             ASSERT_TRUE(std::isfinite(testCalcValue));
             ASSERT_THAT(testPickValue, testing::DoubleNear(testCalcValue, testPricePrecision));
-            ASSERT_THAT(expectedValues[0ui32], testing::DoubleNear(testCalcValue, testPricePrecision));
+            ASSERT_THAT(expectedValues[0u], testing::DoubleNear(testCalcValue, testPricePrecision));
          }
       }
       std::ranges::fill(expectedValues, std::numeric_limits<double>::signaling_NaN());
@@ -142,7 +144,7 @@ void test_variance_step(TeAn &fixture, decimal const testPriceStep)
       variance<> testIndicator{test_period,};
       ASSERT_EQ(test_period, testIndicator.period());
       ASSERT_EQ(testLookbackPeriod, testIndicator.lookback_period());
-      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + testIterationsNumber))
+      for (auto const testIteration : std::views::iota(0u, testLookbackPeriod + testIterationsNumber))
       {
          auto const testPickValue{testIndicator.pick(testIteration, testPrices[testIteration]),};
          auto const testCalcValue{testIndicator.calc(testIteration, testPrices[testIteration]),};
@@ -158,7 +160,7 @@ void test_variance_step(TeAn &fixture, decimal const testPriceStep)
          }
       }
       testIndicator.reset();
-      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + 1ui32))
+      for (auto const testIteration : std::views::iota(0u, testLookbackPeriod + 1u))
       {
          auto const testPickValue{testIndicator.pick(testIteration, testPrices[testIteration]),};
          auto const testCalcValue{testIndicator.calc(testIteration, testPrices[testIteration]),};
@@ -180,17 +182,17 @@ template<uint32_t test_period>
 void test_variance(TeAn &fixture, decimal const testPriceStep)
 {
    test_variance_step<test_period>(fixture, testPriceStep);
-   if constexpr (2ui32 < test_period)
+   if constexpr (2u < test_period)
    {
-      test_variance<test_period - 1>(fixture, testPriceStep);
+      test_variance<test_period - 1u>(fixture, testPriceStep);
    }
 }
 
 TEST_F(TeAn, Variance)
 {
-   constexpr auto testMaxPeriod{100ui32,};
-   ASSERT_NO_FATAL_FAILURE(test_variance<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0ui32]), .scale = 12ui8,}));
-   ASSERT_NO_FATAL_FAILURE(test_variance<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6ui32]), .scale = 00ui8,}));
+   constexpr auto testMaxPeriod{100u,};
+   ASSERT_NO_FATAL_FAILURE(test_variance<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 12,}));
+   ASSERT_NO_FATAL_FAILURE(test_variance<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale =  0,}));
 }
 
 }

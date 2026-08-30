@@ -33,6 +33,8 @@
 #include <ta_func.h> /// for TA_LINEARREG, TA_LINEARREG_INTERCEPT, TA_LINEARREG_INTERCEPT_Lookback, TA_LINEARREG_Lookback, TA_LINEARREG_SLOPE, TA_LINEARREG_SLOPE_Lookback, TA_SUCCESS, TA_TSF, TA_TSF_Lookback
 
 #include <algorithm> /// for std::ranges::fill
+#include <cmath> /// for std::isfinite
+#include <cstdint> /// for int64_t, uint32_t
 #include <memory> /// for std::addressof, std::make_unique
 #include <ranges> ///< for std::views::iota
 #include <vector> /// for std::vector
@@ -44,17 +46,17 @@ template<uint32_t test_period>
 void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
 {
    constexpr auto testLookbackPeriod{linear_regression<test_period>::lookback_period,};
-   constexpr auto testIterationsNumber{test_period * 10ui32,};
+   constexpr auto testIterationsNumber{test_period * 10u,};
    auto const testPrices{std::make_unique<double[]>(testLookbackPeriod + testIterationsNumber),};
    auto const testIntercepts{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};
    auto const testSlopes{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};
    {
       linear_regression<test_period> testIndicator{};
-      auto const testPricePrecision{inverted_power_of_ten[std::max(6ui8, testPriceStep.scale)],};
+      auto const testPricePrecision{inverted_power_of_ten[std::max<uint32_t>(6u, testPriceStep.scale)],};
       double const testPriceStepValue{testPriceStep,};
-      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod))
+      for (auto const testIteration : std::views::iota(0u, testLookbackPeriod))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number(100ui32, 1000ui32),};
+         auto const testPrice{testPriceStepValue * fixture.random_number(100u, 1000u),};
          auto const testCalcValue{testIndicator.calc(testIteration, testPrice),};
          ASSERT_FALSE(std::isfinite(testCalcValue.intercept));
          ASSERT_FALSE(std::isfinite(testCalcValue.slope));
@@ -62,16 +64,16 @@ void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
       }
       auto const testValues{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};
       auto const testForecasts{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};
-      for (auto const testIteration : std::views::iota(0ui32, testIterationsNumber))
+      for (auto const testIteration : std::views::iota(0u, testIterationsNumber))
       {
-         auto const testPrice{testPriceStepValue * fixture.random_number(100ui32, 1000ui32),};
+         auto const testPrice{testPriceStepValue * fixture.random_number(100u, 1000u),};
          auto const testCalcValue{testIndicator.calc(testLookbackPeriod + testIteration, testPrice),};
          ASSERT_TRUE(std::isfinite(testCalcValue.intercept));
          ASSERT_TRUE(std::isfinite(testCalcValue.slope));
          testPrices[testLookbackPeriod + testIteration] = testPrice;
          testIntercepts[testIteration] = testing::DoubleNear(testCalcValue.intercept, testPricePrecision);
          testSlopes[testIteration] = testing::DoubleNear(testCalcValue.slope, testPricePrecision);
-         testValues[testIteration] = testing::DoubleNear(testCalcValue.slope * (test_period - 1ui32) + testCalcValue.intercept, testPricePrecision);
+         testValues[testIteration] = testing::DoubleNear(testCalcValue.slope * (test_period - 1u) + testCalcValue.intercept, testPricePrecision);
          testForecasts[testIteration] = testing::DoubleNear(testCalcValue.slope * test_period + testCalcValue.intercept, testPricePrecision);
       }
       auto const testInterceptsMatcher{testing::ElementsAreArray(testIntercepts.get(), testIterationsNumber),};
@@ -82,11 +84,11 @@ void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
       expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
       {
          ASSERT_EQ(TA_LINEARREG_Lookback(static_cast<int>(test_period)), static_cast<int>(testLookbackPeriod));
-         auto expectedFirstIndex{0i32,};
-         auto expectedNumberOfElements{0i32,};
+         auto expectedFirstIndex{0,};
+         auto expectedNumberOfElements{0,};
          ASSERT_EQ(TA_LINEARREG(
-            0i32,
-            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1i32,
+            0,
+            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1,
             testPrices.get(),
             static_cast<int>(test_period),
             std::addressof(expectedFirstIndex),
@@ -97,7 +99,7 @@ void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
          ASSERT_EQ(expectedNumberOfElements, static_cast<int>(testIterationsNumber));
          ASSERT_THAT(expectedValues, testValuesMatcher);
          testIndicator.reset();
-         for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod))
+         for (auto const testIteration : std::views::iota(0u, testLookbackPeriod))
          {
             auto const testPrice{testPrices[testIteration],};
             auto const testCalcValue{testIndicator.calc(testIteration, testPrice),};
@@ -109,17 +111,17 @@ void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
             auto const testCalcValue{testIndicator.calc(testLookbackPeriod, testPrice),};
             ASSERT_TRUE(std::isfinite(testCalcValue.intercept));
             ASSERT_TRUE(std::isfinite(testCalcValue.slope));
-            ASSERT_THAT(expectedValues[0ui32], testing::DoubleNear(testCalcValue.slope * (test_period - 1ui32) + testCalcValue.intercept, testPricePrecision));
+            ASSERT_THAT(expectedValues[0u], testing::DoubleNear(testCalcValue.slope * (test_period - 1u) + testCalcValue.intercept, testPricePrecision));
          }
       }
       std::ranges::fill(expectedValues, std::numeric_limits<double>::signaling_NaN());
       {
          ASSERT_EQ(TA_LINEARREG_INTERCEPT_Lookback(static_cast<int>(test_period)), static_cast<int>(testLookbackPeriod));
-         auto expectedFirstIndex{0i32,};
-         auto expectedNumberOfElements{0i32,};
+         auto expectedFirstIndex{0,};
+         auto expectedNumberOfElements{0,};
          ASSERT_EQ(TA_LINEARREG_INTERCEPT(
-            0i32,
-            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1i32,
+            0,
+            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1,
             testPrices.get(),
             static_cast<int>(test_period),
             std::addressof(expectedFirstIndex),
@@ -133,11 +135,11 @@ void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
       std::ranges::fill(expectedValues, std::numeric_limits<double>::signaling_NaN());
       {
          ASSERT_EQ(TA_LINEARREG_SLOPE_Lookback(static_cast<int>(test_period)), static_cast<int>(testLookbackPeriod));
-         auto expectedFirstIndex{0i32,};
-         auto expectedNumberOfElements{0i32,};
+         auto expectedFirstIndex{0,};
+         auto expectedNumberOfElements{0,};
          ASSERT_EQ(TA_LINEARREG_SLOPE(
-            0i32,
-            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1i32,
+            0,
+            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1,
             testPrices.get(),
             static_cast<int>(test_period),
             std::addressof(expectedFirstIndex),
@@ -151,11 +153,11 @@ void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
       std::ranges::fill(expectedValues, std::numeric_limits<double>::signaling_NaN());
       {
          ASSERT_EQ(TA_TSF_Lookback(static_cast<int>(test_period)), static_cast<int>(testLookbackPeriod));
-         auto expectedFirstIndex{0i32,};
-         auto expectedNumberOfElements{0i32,};
+         auto expectedFirstIndex{0,};
+         auto expectedNumberOfElements{0,};
          ASSERT_EQ(TA_TSF(
-            0i32,
-            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1i32,
+            0,
+            static_cast<int>(testLookbackPeriod + testIterationsNumber) - 1,
             testPrices.get(),
             static_cast<int>(test_period),
             std::addressof(expectedFirstIndex),
@@ -171,7 +173,7 @@ void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
       linear_regression<> testIndicator{test_period,};
       ASSERT_EQ(test_period, testIndicator.period());
       ASSERT_EQ(testLookbackPeriod, testIndicator.lookback_period());
-      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + testIterationsNumber))
+      for (auto const testIteration : std::views::iota(0u, testLookbackPeriod + testIterationsNumber))
       {
          auto const testCalcValue{testIndicator.calc(testIteration, testPrices[testIteration]),};
          if (testLookbackPeriod > testIteration)
@@ -186,7 +188,7 @@ void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
          }
       }
       testIndicator.reset();
-      for (auto const testIteration : std::views::iota(0ui32, testLookbackPeriod + 1ui32))
+      for (auto const testIteration : std::views::iota(0u, testLookbackPeriod + 1u))
       {
          auto const testCalcValue{testIndicator.calc(testIteration, testPrices[testIteration]),};
          if (testLookbackPeriod > testIteration)
@@ -207,17 +209,17 @@ template<uint32_t test_period>
 void test_linear_regression(TeAn &fixture, decimal const testPriceStep)
 {
    test_linear_regression_step<test_period>(fixture, testPriceStep);
-   if constexpr (2ui32 < test_period)
+   if constexpr (2u < test_period)
    {
-      test_linear_regression<test_period - 1ui32>(fixture, testPriceStep);
+      test_linear_regression<test_period - 1u>(fixture, testPriceStep);
    }
 }
 
 TEST_F(TeAn, LinearRegression)
 {
-   constexpr auto testMaxPeriod{100ui32,};
-   ASSERT_NO_FATAL_FAILURE(test_linear_regression<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0ui32]), .scale = 12ui8,}));
-   ASSERT_NO_FATAL_FAILURE(test_linear_regression<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6ui32]), .scale = 00ui8,}));
+   constexpr auto testMaxPeriod{100u,};
+   ASSERT_NO_FATAL_FAILURE(test_linear_regression<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 12,}));
+   ASSERT_NO_FATAL_FAILURE(test_linear_regression<testMaxPeriod>(*this, decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale =  0,}));
 }
 
 }

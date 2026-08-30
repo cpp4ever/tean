@@ -69,13 +69,13 @@ public:
 
    [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
    {
-      return do_pick(inSequenceNumber, m_sumOverPeriod.pick(inSequenceNumber, inValue));
+      return do_calc(inSequenceNumber, m_sumOverPeriod.pick(inSequenceNumber, inValue));
    }
 
    [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue, double &outSumOverPeriod) const noexcept
    {
       outSumOverPeriod = m_sumOverPeriod.pick(inSequenceNumber, inValue);
-      return do_pick(inSequenceNumber, outSumOverPeriod);
+      return do_calc(inSequenceNumber, outSumOverPeriod);
    }
 
    [[maybe_unused]] void reset() noexcept
@@ -84,11 +84,9 @@ public:
    }
 
 private:
-   sum_over_period m_sumOverPeriod;
+   sum_over_period<> m_sumOverPeriod;
 
-   [[nodiscard]] double do_calc(uint64_t inSequenceNumber, double inSumOverPeriod) noexcept;
-
-   [[nodiscard]] double do_pick(uint64_t inSequenceNumber, double inSumOverPeriod) const noexcept;
+   [[nodiscard]] double do_calc(uint64_t inSequenceNumber, double inSumOverPeriod) const noexcept;
 };
 
 }

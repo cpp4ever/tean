@@ -33,23 +33,23 @@
 namespace tean
 {
 
-exponential_moving_average<static_cast<uint32_t>(-1i32), static_cast<uint32_t>(-1i32)>::exponential_moving_average(
+exponential_moving_average<static_cast<uint32_t>(-1), static_cast<uint32_t>(-1)>::exponential_moving_average(
    uint32_t const inPeriod,
    uint32_t const inUntrustedPeriod,
    double const inSmoothing
 ) noexcept :
    m_period(inPeriod),
-   m_lookbackPeriod(inUntrustedPeriod + inPeriod - 1ui32),
-   m_smoothingFactor(inSmoothing / (inPeriod + 1ui32))
+   m_lookbackPeriod(inUntrustedPeriod + inPeriod - 1u),
+   m_smoothingFactor(inSmoothing / (inPeriod + 1u))
 {
    assert(true == std::isfinite(m_smoothingFactor));
-   assert(1ui32 < period());
+   assert(1u < period());
 }
 
-double exponential_moving_average<static_cast<uint32_t>(-1i32), static_cast<uint32_t>(-1i32)>::calc(uint64_t const inSequenceNumber, double const inValue) noexcept
+double exponential_moving_average<static_cast<uint32_t>(-1), static_cast<uint32_t>(-1)>::calc(uint64_t const inSequenceNumber, double const inValue) noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+   assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
    m_prevSequenceNumber = inSequenceNumber;
 #endif
    assert(true == std::isfinite(inValue));
@@ -64,7 +64,7 @@ double exponential_moving_average<static_cast<uint32_t>(-1i32), static_cast<uint
    else
    {
       m_value += inValue;
-      if (period() == (inSequenceNumber + 1ui64))
+      if (period() == (inSequenceNumber + 1ull))
       {
          m_value /= period();
          if (lookback_period() == inSequenceNumber)
@@ -76,17 +76,17 @@ double exponential_moving_average<static_cast<uint32_t>(-1i32), static_cast<uint
    return std::numeric_limits<double>::signaling_NaN();
 }
 
-double exponential_moving_average<static_cast<uint32_t>(-1i32), static_cast<uint32_t>(-1i32)>::pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
+double exponential_moving_average<static_cast<uint32_t>(-1), static_cast<uint32_t>(-1)>::pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1ui64) == inSequenceNumber) || ((0ui64 == m_prevSequenceNumber) && (0ui64 == inSequenceNumber)));
+   assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
 #endif
    assert(true == std::isfinite(inValue));
    if ((period() <= inSequenceNumber) && (lookback_period() <= inSequenceNumber)) [[likely]]
    {
       return m_value + m_smoothingFactor * (inValue - m_value);
    }
-   if ((period() == (inSequenceNumber + 1ui64)) && (lookback_period() == inSequenceNumber))
+   if ((period() == (inSequenceNumber + 1ull)) && (lookback_period() == inSequenceNumber))
    {
       return (m_value + inValue) / period();
    }

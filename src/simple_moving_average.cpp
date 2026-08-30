@@ -33,24 +33,12 @@
 namespace tean
 {
 
-double simple_moving_average::do_calc(uint64_t const inSequenceNumber, double const inSumOverPeriod) noexcept
+double simple_moving_average::do_calc(uint64_t const inSequenceNumber, double const inSumOverPeriod) const noexcept
 {
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
       assert(true == std::isfinite(inSumOverPeriod));
-      assert(false == std::isnan(inSumOverPeriod));
-      return inSumOverPeriod / static_cast<double>(period());
-   }
-   return std::numeric_limits<double>::signaling_NaN();
-}
-
-double simple_moving_average::do_pick(uint64_t const inSequenceNumber, double const inSumOverPeriod) const noexcept
-{
-   if (lookback_period() <= inSequenceNumber) [[likely]]
-   {
-      assert(true == std::isfinite(inSumOverPeriod));
-      assert(false == std::isnan(inSumOverPeriod));
-      return inSumOverPeriod / static_cast<double>(period());
+      return inSumOverPeriod / period();
    }
    return std::numeric_limits<double>::signaling_NaN();
 }

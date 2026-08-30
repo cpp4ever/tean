@@ -60,7 +60,7 @@ TEST_F(TeAn, SimpleMovingAverage)
          auto testPrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
          auto testValues = std::make_unique<testing::Matcher<double>[]>(testIterationsNumber);
          {
-            tean::sum_over_period testAdditionalIndicator{testPeriod};
+            tean::sum_over_period<> testAdditionalIndicator{testPeriod,};
             for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
             {
                auto const testPrice = testPriceStepValue * random_number<int64_t>(100, 1000);
