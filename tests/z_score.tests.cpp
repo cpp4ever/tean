@@ -42,7 +42,7 @@ namespace tean::tests
 template<uint32_t test_period>
 void test_z_score_step(TeAn &fixture, decimal const testPriceStep)
 {
-   constexpr auto testLookbackPeriod{z_score<test_period>::lookback_period,};
+   constexpr auto testLookbackPeriod{z_score<test_period>::lookback_period(),};
    constexpr auto testIterationsNumber{test_period * 10u,};
    auto const testPricePrecision{inverted_power_of_ten[testPriceStep.scale / 3u] * inverted_power_of_ten[3u],};
    double const testPriceStepValue{testPriceStep,};

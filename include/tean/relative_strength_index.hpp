@@ -25,54 +25,256 @@
 
 #pragma once
 
+#include "tean/indicator_traits.hpp" ///< for tean::internals::indicator_traits, tean::lazy_indicator
+
+#include <cassert> /// for assert
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for uint32_t, uint64_t
+#include <limits> /// for std::numeric_limits
 
 namespace tean
 {
 
-class [[nodiscard]] relative_strength_index final
+namespace internals
 {
+
+template<uint32_t indicator_period>
+struct relative_strength_index_options final
+{};
+
+template<>
+struct relative_strength_index_options<lazy_indicator> final
+{
+   uint32_t const period;
+};
+
+template<uint32_t indicator_period>
+struct relative_strength_index_storage final
+{
+   double smoothGain{0e0,};
+   double smoothLoss{0e0,};
+   double value{std::numeric_limits<double>::signaling_NaN(),};
+};
+
+template<>
+struct relative_strength_index_storage<lazy_indicator> final
+{
+   relative_strength_index_options<lazy_indicator> const options;
+   double smoothGain{0e0,};
+   double smoothLoss{0e0,};
+   double value{std::numeric_limits<double>::signaling_NaN(),};
+};
+
+[[nodiscard]] constexpr uint32_t relative_strength_index_lookback_period(uint32_t const inPeriod) noexcept
+{
+   return inPeriod;
+}
+
+template<uint32_t indicator_period>
+struct indicator_traits<relative_strength_index_options<indicator_period>> final
+{
+   using type = relative_strength_index_options<indicator_period>;
+
+   [[nodiscard]] static constexpr uint32_t lookback_period() noexcept
+   {
+      return relative_strength_index_lookback_period(period());
+   }
+
+   [[nodiscard]] static constexpr uint32_t period() noexcept
+   {
+      return indicator_period;
+   }
+};
+
+template<>
+struct indicator_traits<relative_strength_index_options<lazy_indicator>> final
+{
+   using type = relative_strength_index_options<lazy_indicator>;
+
+   [[nodiscard]] static constexpr uint32_t lookback_period(type const options) noexcept
+   {
+      return period(options);
+   }
+
+   [[nodiscard]] static constexpr uint32_t period(type const options) noexcept
+   {
+      return options.period;
+   }
+};
+
+}
+
+template<uint32_t indicator_period = lazy_indicator>
+class relative_strength_index final
+{
+private:
+   using options = internals::relative_strength_index_options<indicator_period>;
+   using options_traits = internals::indicator_traits<options>;
+
 public:
-   relative_strength_index() = delete;
+   [[maybe_unused, nodiscard]] constexpr relative_strength_index() noexcept requires(lazy_indicator != indicator_period) :
+      m_storage{}
+   {
+      static_assert(1u < indicator_period);
+   }
+
    relative_strength_index(relative_strength_index &&) = delete;
    relative_strength_index(relative_strength_index const &) = delete;
-   [[nodiscard]] explicit relative_strength_index(uint32_t inPeriod) noexcept;
+
+   [[maybe_unused, nodiscard]] constexpr explicit relative_strength_index(
+      uint32_t const inPeriod
+   ) noexcept requires(lazy_indicator == indicator_period) :
+      m_storage{.options = options{.period = inPeriod,},}
+   {
+      assert(1u < period());
+   }
 
    relative_strength_index &operator = (relative_strength_index &&) = delete;
    relative_strength_index &operator = (relative_strength_index const &) = delete;
 
-   [[nodiscard]] double calc(uint64_t inSequenceNumber, double inValue) noexcept;
-
-   [[maybe_unused, nodiscard]] uint32_t lookback_period() const noexcept
+   [[maybe_unused, nodiscard]] constexpr double calc(uint64_t inSequenceNumber, double inValue) noexcept
    {
-      return m_period;
+#if (not defined(NDEBUG))
+      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
+      m_prevSequenceNumber = inSequenceNumber;
+#endif
+      assert(true == std::isfinite(inValue));
+      if (lookback_period() < inSequenceNumber) [[likely]]
+      {
+         return do_regular_calc(inValue);
+      }
+      return do_lookback_calc(inSequenceNumber, inValue);
    }
 
-   [[maybe_unused, nodiscard]] uint32_t period() const noexcept
+   [[nodiscard]] constexpr uint32_t lookback_period() const noexcept requires(lazy_indicator == indicator_period)
    {
-      return m_period;
+      return options_traits::lookback_period(m_storage.options);
    }
 
-   [[nodiscard]] double pick(uint64_t inSequenceNumber, double inValue) const noexcept;
+   [[nodiscard]] static constexpr uint32_t lookback_period() noexcept requires(lazy_indicator != indicator_period)
+   {
+      return options_traits::lookback_period();
+   }
 
-   void reset() noexcept;
+   [[nodiscard]] constexpr uint32_t period() const noexcept requires(lazy_indicator == indicator_period)
+   {
+      return options_traits::period(m_storage.options);
+   }
+
+   [[nodiscard]] static constexpr uint32_t period() noexcept requires(lazy_indicator != indicator_period)
+   {
+      return options_traits::period();
+   }
+
+   [[maybe_unused, nodiscard]] constexpr double pick(uint64_t inSequenceNumber, double inValue) const noexcept
+   {
+#if (not defined(NDEBUG))
+      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
+#endif
+      assert(true == std::isfinite(inValue));
+      if (lookback_period() < inSequenceNumber) [[likely]]
+      {
+         return do_regular_pick(inValue);
+      }
+      if (lookback_period() == inSequenceNumber) [[unlikely]]
+      {
+         return do_lookback_pick(inValue);
+      }
+      return std::numeric_limits<double>::signaling_NaN();
+   }
+
+   [[maybe_unused]] constexpr void reset() noexcept
+   {
+      m_storage.smoothGain = 0e0;
+      m_storage.smoothLoss = 0e0;
+      m_storage.value = std::numeric_limits<double>::signaling_NaN();
+#if (not defined(NDEBUG))
+      m_prevSequenceNumber = 0ull;
+#endif
+   }
 
 private:
-   uint32_t const m_period;
+   internals::relative_strength_index_storage<indicator_period> m_storage;
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber;
+   uint64_t m_prevSequenceNumber{0ull,};
 #endif
-   double m_smoothGain;
-   double m_smoothLoss;
-   double m_value;
 
-   [[nodiscard]] double do_lookback_calc(uint64_t inSequenceNumber, double inValue) noexcept;
+   [[nodiscard]] constexpr double do_lookback_calc(uint64_t inSequenceNumber, double inValue) noexcept
+   {
+      if (0ull < inSequenceNumber) [[likely]]
+      {
+         if (auto const delta{inValue - m_storage.value,}; 0e0 < delta)
+         {
+            m_storage.smoothGain += delta;
+         }
+         else
+         {
+            m_storage.smoothLoss -= delta;
+         }
+      }
+      m_storage.value = inValue;
+      if (lookback_period() == inSequenceNumber) [[unlikely]]
+      {
+         m_storage.smoothGain /= period();
+         m_storage.smoothLoss /= period();
+         auto const smoothTotal{m_storage.smoothGain + m_storage.smoothLoss,};
+         return (0e0 == smoothTotal) ? 0e0 : (100e0 * (m_storage.smoothGain / smoothTotal));
+      }
+      return std::numeric_limits<double>::signaling_NaN();
+   }
 
-   [[nodiscard]] double do_lookback_pick(double inValue) const noexcept;
+   [[nodiscard]] constexpr double do_lookback_pick(double inValue) const noexcept
+   {
+      double smoothGain;
+      double smoothLoss;
+      if (auto const delta{inValue - m_storage.value,}; 0e0 < delta)
+      {
+         smoothGain = (m_storage.smoothGain + delta) / period();
+         smoothLoss = m_storage.smoothLoss / period();
+      }
+      else
+      {
+         smoothGain = m_storage.smoothGain / period();
+         smoothLoss = (m_storage.smoothLoss - delta) / period();
+      }
+      auto const smoothTotal{smoothGain + smoothLoss,};
+      return (0e0 == smoothTotal) ? 0e0 : (100e0 * (smoothGain / smoothTotal));
+   }
 
-   [[nodiscard]] double do_regular_calc(double inValue) noexcept;
+   [[nodiscard]] constexpr double do_regular_calc(double inValue) noexcept
+   {
+      if (auto const delta{inValue - m_storage.value,}; 0e0 < delta)
+      {
+         m_storage.smoothGain += (delta - m_storage.smoothGain) / period();
+         m_storage.smoothLoss -= m_storage.smoothLoss / period();
+      }
+      else
+      {
+         m_storage.smoothGain -= m_storage.smoothGain / period();
+         m_storage.smoothLoss += (-delta - m_storage.smoothLoss) / period();
+      }
+      m_storage.value = inValue;
+      auto const smoothTotal{m_storage.smoothGain + m_storage.smoothLoss,};
+      return (0e0 == smoothTotal) ? 0e0 : (100e0 * (m_storage.smoothGain / smoothTotal));
+   }
 
-   [[nodiscard]] double do_regular_pick(double inValue) const noexcept;
+   [[nodiscard]] constexpr double do_regular_pick(double inValue) const noexcept
+   {
+      double smoothGain;
+      double smoothLoss;
+      if (auto const delta{inValue - m_storage.value,}; 0e0 < delta)
+      {
+         smoothGain = m_storage.smoothGain + (delta - m_storage.smoothGain) / period();
+         smoothLoss = m_storage.smoothLoss - m_storage.smoothLoss / period();
+      }
+      else
+      {
+         smoothGain = m_storage.smoothGain - m_storage.smoothGain / period();
+         smoothLoss = m_storage.smoothLoss + (-delta - m_storage.smoothLoss) / period();
+      }
+      auto const smoothTotal{smoothGain + smoothLoss,};
+      return (0e0 == smoothTotal) ? 0e0 : (100e0 * (smoothGain / smoothTotal));
+   }
 };
 
 }

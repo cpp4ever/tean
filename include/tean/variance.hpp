@@ -25,37 +25,137 @@
 
 #pragma once
 
+#include "tean/indicator_traits.hpp" ///< for tean::internals::indicator_traits, tean::lazy_indicator
+
 #include <algorithm> /// for std::ranges::fill
 #include <array> /// for std::array
 #include <cassert> /// for assert
 #include <cmath> /// for std::isfinite
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
-#include <memory> /// for std::unique_ptr
+#include <memory> /// for std::allocator
+#include <vector> /// for std::vector
 
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1)>
-class variance;
-
-template<uint32_t period>
-class [[maybe_unused]] variance
+namespace internals
 {
-   static_assert(1u < period);
+
+template<uint32_t indicator_period>
+struct variance_options final
+{};
+
+template<>
+struct variance_options<lazy_indicator> final
+{
+   uint32_t const period;
+   uint32_t const lookbackPeriod;
+};
+
+template<uint32_t indicator_period, typename y_values_allocator>
+struct variance_storage final
+{
+   double sum{0e0,};
+   double sumOfSquares{0e0,};
+   std::array<double, indicator_period> values{};
+};
+
+template<typename y_values_allocator>
+struct variance_storage<lazy_indicator, y_values_allocator> final
+{
+   variance_options<lazy_indicator> const options;
+   double sum{0e0,};
+   double sumOfSquares{0e0,};
+   std::vector<double, y_values_allocator> values;
+};
+
+[[nodiscard]] constexpr uint32_t variance_lookback_period(uint32_t const inPeriod) noexcept
+{
+   return inPeriod - 1u;
+}
+
+template<uint32_t indicator_period>
+struct indicator_traits<variance_options<indicator_period>> final
+{
+   using type = variance_options<indicator_period>;
+
+   [[nodiscard]] static constexpr uint32_t lookback_period() noexcept
+   {
+      return variance_lookback_period(period());
+   }
+
+   [[nodiscard]] static constexpr uint32_t period() noexcept
+   {
+      return indicator_period;
+   }
+};
+
+template<>
+struct indicator_traits<variance_options<lazy_indicator>> final
+{
+   using type = variance_options<lazy_indicator>;
+
+   [[nodiscard]] static constexpr uint32_t lookback_period(type const options) noexcept
+   {
+      return options.lookbackPeriod;
+   }
+
+   [[nodiscard]] static constexpr uint32_t period(type const options) noexcept
+   {
+      return options.period;
+   }
+};
+
+}
+
+template<uint32_t indicator_period = lazy_indicator, typename values_allocator = std::allocator<double>>
+class variance final
+{
+private:
+   using options = internals::variance_options<indicator_period>;
+   using options_traits = internals::indicator_traits<options>;
 
 public:
-   static constexpr inline auto lookback_period{period - 1u,};
-
-   [[maybe_unused, nodiscard]] constexpr variance() noexcept
+   [[maybe_unused, nodiscard]] constexpr variance() noexcept requires(lazy_indicator != indicator_period) :
+      m_storage{}
    {
+      static_assert(1u < period());
 #if (not defined(NDEBUG))
-      std::ranges::fill(m_values, std::numeric_limits<double>::signaling_NaN());
+      std::ranges::fill(m_storage.values, std::numeric_limits<double>::signaling_NaN());
 #endif
    }
 
    variance(variance &&) = delete;
    variance(variance const &) = delete;
+
+   [[nodiscard]] constexpr explicit variance(uint32_t const inPeriod) requires(lazy_indicator == indicator_period) :
+      variance{inPeriod, values_allocator{},}
+   {}
+
+   [[maybe_unused, nodiscard]] constexpr variance(
+      uint32_t const inPeriod,
+      values_allocator const &allocator
+   ) requires(lazy_indicator == indicator_period) :
+      m_storage
+      {
+         .options = options
+         {
+            .period = inPeriod,
+            .lookbackPeriod = internals::variance_lookback_period(inPeriod),
+         },
+         .values = std::vector<double, values_allocator>
+         {
+            inPeriod,
+#if (not defined(NDEBUG))
+            std::numeric_limits<double>::signaling_NaN(),
+#endif
+            allocator,
+         },
+      }
+   {
+      assert(1u < period());
+   }
 
    variance &operator = (variance &&) = delete;
    variance &operator = (variance const &) = delete;
@@ -66,14 +166,14 @@ public:
       return calc(inSequenceNumber, inValue, mean);
    }
 
-   [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
+   [[nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
    {
 #if (not defined(NDEBUG))
       assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
       m_prevSequenceNumber = inSequenceNumber;
 #endif
       assert(true == std::isfinite(inValue));
-      if (lookback_period <= inSequenceNumber) [[likely]]
+      if (lookback_period() <= inSequenceNumber) [[likely]]
       {
          return do_regular_calc(inSequenceNumber, inValue, outMean);
       }
@@ -82,22 +182,42 @@ public:
       return std::numeric_limits<double>::signaling_NaN();
    }
 
+   [[nodiscard]] constexpr uint32_t lookback_period() const noexcept requires(lazy_indicator == indicator_period)
+   {
+      return options_traits::lookback_period(m_storage.options);
+   }
+
+   [[nodiscard]] static constexpr uint32_t lookback_period() noexcept requires(lazy_indicator != indicator_period)
+   {
+      return options_traits::lookback_period();
+   }
+
+   [[nodiscard]] constexpr uint32_t period() const noexcept requires(lazy_indicator == indicator_period)
+   {
+      return options_traits::period(m_storage.options);
+   }
+
+   [[nodiscard]] static constexpr uint32_t period() noexcept requires(lazy_indicator != indicator_period)
+   {
+      return options_traits::period();
+   }
+
    [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
    {
       double mean{};
       return pick(inSequenceNumber, inValue, mean);
    }
 
-   [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
+   [[nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
    {
 #if (not defined(NDEBUG))
       assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
 #endif
       assert(true == std::isfinite(inValue));
-      if (lookback_period <= inSequenceNumber) [[likely]]
+      if (lookback_period() <= inSequenceNumber) [[likely]]
       {
-         outMean = (m_sum + inValue) / period;
-         auto const meanOfSquares{(m_sumOfSquares + inValue * inValue) / period,};
+         outMean = (m_storage.sum + inValue) / period();
+         auto const meanOfSquares{(m_storage.sumOfSquares + inValue * inValue) / period(),};
          return meanOfSquares - outMean * outMean;
       }
       outMean = std::numeric_limits<double>::signaling_NaN();
@@ -106,96 +226,39 @@ public:
 
    [[maybe_unused]] constexpr void reset() noexcept
    {
-      m_sum = 0e0;
-      m_sumOfSquares = 0e0;
+      m_storage.sum = 0e0;
+      m_storage.sumOfSquares = 0e0;
 #if (not defined(NDEBUG))
-      std::ranges::fill(m_values, std::numeric_limits<double>::signaling_NaN());
+      std::ranges::fill(m_storage.values, std::numeric_limits<double>::signaling_NaN());
       m_prevSequenceNumber = 0ull;
 #endif
    }
 
 private:
-   double m_sum{0e0,};
-   double m_sumOfSquares{0e0,};
-   std::array<double, lookback_period> m_values{};
+   internals::variance_storage<indicator_period, values_allocator> m_storage;
 #if (not defined(NDEBUG))
    uint64_t m_prevSequenceNumber{0ull,};
 #endif
 
    constexpr void do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept
    {
-      m_sum += inValue;
-      m_sumOfSquares += inValue * inValue;
-      m_values[inSequenceNumber % lookback_period] = inValue;
+      m_storage.sum += inValue;
+      m_storage.sumOfSquares += inValue * inValue;
+      m_storage.values[inSequenceNumber % lookback_period()] = inValue;
    }
 
    [[nodiscard]] constexpr double do_regular_calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
    {
-      m_sum += inValue;
-      m_sumOfSquares += inValue * inValue;
-      outMean = m_sum / period;
-      auto const meanOfSquares{m_sumOfSquares / period,};
-      auto &prevValue{m_values[inSequenceNumber % lookback_period],};
-      m_sum -= prevValue;
-      m_sumOfSquares -= prevValue * prevValue;
+      m_storage.sum += inValue;
+      m_storage.sumOfSquares += inValue * inValue;
+      outMean = m_storage.sum / period();
+      auto const meanOfSquares{m_storage.sumOfSquares / period(),};
+      auto &prevValue{m_storage.values[inSequenceNumber % lookback_period()],};
+      m_storage.sum -= prevValue;
+      m_storage.sumOfSquares -= prevValue * prevValue;
       prevValue = inValue;
       return meanOfSquares - outMean * outMean;
    }
-};
-
-template<>
-class [[maybe_unused]] variance<static_cast<uint32_t>(-1)> final
-{
-public:
-   variance() = delete;
-   variance(variance &&) = delete;
-   variance(variance const &) = delete;
-   [[nodiscard]] explicit variance(uint32_t inPeriod);
-
-   variance &operator = (variance &&) = delete;
-   variance &operator = (variance const &) = delete;
-
-   [[maybe_unused, nodiscard]] double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
-   {
-      double mean{};
-      return calc(inSequenceNumber, inValue, mean);
-   }
-
-   [[nodiscard]] double calc(uint64_t inSequenceNumber, double inValue, double &outMean) noexcept;
-
-   [[maybe_unused, nodiscard]] uint32_t lookback_period() const noexcept
-   {
-      return m_lookbackPeriod;
-   }
-
-   [[maybe_unused, nodiscard]] uint32_t period() const noexcept
-   {
-      return m_period;
-   }
-
-   [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
-   {
-      double mean{};
-      return pick(inSequenceNumber, inValue, mean);
-   }
-
-   [[nodiscard]] double pick(uint64_t inSequenceNumber, double inValue, double &outMean) const noexcept;
-
-   void reset() noexcept;
-
-private:
-   uint32_t const m_period;
-   uint32_t const m_lookbackPeriod;
-   double m_sum{0e0,};
-   double m_sumOfSquares{0e0,};
-   std::unique_ptr<double[]> const m_values;
-#if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ull,};
-#endif
-
-   void do_lookback_calc(uint64_t inSequenceNumber, double inValue) noexcept;
-
-   [[nodiscard]] double do_regular_calc(uint64_t inSequenceNumber, double inValue, double &outMean) noexcept;
 };
 
 }

@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "tean/indicator_traits.hpp" ///< for tean::lazy_indicator
 #include "tean/variance.hpp" ///< for tean::variance
 
 #include <cassert> /// for assert
@@ -35,18 +36,27 @@
 namespace tean
 {
 
-template<uint32_t period = static_cast<uint32_t>(-1)>
-class z_score;
-
-template<uint32_t period>
-class [[maybe_unused]] z_score final
+template<uint32_t indicator_period = lazy_indicator, typename values_allocator = std::allocator<double>>
+class z_score final
 {
 public:
-   static constexpr inline auto lookback_period{variance<period>::lookback_period,};
+   [[maybe_unused, nodiscard]] constexpr z_score() noexcept requires(lazy_indicator != indicator_period) :
+      m_variance{}
+   {}
 
-   [[maybe_unused, nodiscard]] constexpr z_score() noexcept = default;
    z_score(z_score &&) = delete;
    z_score(z_score const &) = delete;
+
+   [[nodiscard]] constexpr explicit z_score(uint32_t const inPeriod) requires(lazy_indicator == indicator_period) :
+      m_variance{inPeriod,}
+   {}
+
+   [[maybe_unused, nodiscard]] constexpr z_score(
+      uint32_t const inPeriod,
+      values_allocator const &allocator
+   ) requires(lazy_indicator == indicator_period) :
+      m_variance{inPeriod, allocator,}
+   {}
 
    z_score &operator = (z_score &&) = delete;
    z_score &operator = (z_score const &) = delete;
@@ -56,6 +66,26 @@ public:
       auto mean{0e0};
       auto const variance{m_variance.calc(inSequenceNumber, inValue, mean),};
       return variance_to_z_score(inSequenceNumber, inValue, mean, variance);
+   }
+
+   [[nodiscard]] constexpr uint32_t lookback_period() const noexcept requires(lazy_indicator == indicator_period)
+   {
+      return m_variance.lookback_period();
+   }
+
+   [[nodiscard]] static constexpr uint32_t lookback_period() noexcept requires(lazy_indicator != indicator_period)
+   {
+      return variance<indicator_period>::lookback_period();
+   }
+
+   [[maybe_unused, nodiscard]] constexpr uint32_t period() const noexcept requires(lazy_indicator == indicator_period)
+   {
+      return m_variance.period();
+   }
+
+   [[maybe_unused, nodiscard]] static constexpr uint32_t period() noexcept requires(lazy_indicator != indicator_period)
+   {
+      return variance<indicator_period>::period();
    }
 
    [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
@@ -71,73 +101,9 @@ public:
    }
 
 private:
-   variance<period> m_variance{};
+   variance<indicator_period> m_variance{};
 
    [[nodiscard]] constexpr double variance_to_z_score(
-      uint64_t const inSequenceNumber,
-      double const inValue,
-      double const inMean,
-      double const inVariance
-   ) const noexcept
-   {
-      if (lookback_period <= inSequenceNumber) [[likely]]
-      {
-         assert(true == std::isfinite(inVariance));
-         return (0e0 >= inVariance) ? 0e0 : ((inValue - inMean) / std::sqrt(inVariance));
-      }
-      assert(false == std::isfinite(inVariance));
-      return std::numeric_limits<double>::signaling_NaN();
-   }
-};
-
-template<>
-class [[maybe_unused]] z_score<static_cast<uint32_t>(-1)> final
-{
-public:
-   z_score() = delete;
-   z_score(z_score &&) = delete;
-   z_score(z_score const &) = delete;
-
-   [[maybe_unused, nodiscard]] explicit z_score(uint32_t const inPeriod) noexcept :
-      m_variance(inPeriod)
-   {}
-
-   z_score &operator = (z_score &&) = delete;
-   z_score &operator = (z_score const &) = delete;
-
-   [[maybe_unused, nodiscard]] double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
-   {
-      auto mean{0e0};
-      auto const variance{m_variance.calc(inSequenceNumber, inValue, mean),};
-      return variance_to_z_score(inSequenceNumber, inValue, mean, variance);
-   }
-
-   [[maybe_unused, nodiscard]] uint32_t lookback_period() const noexcept
-   {
-      return m_variance.lookback_period();
-   }
-
-   [[maybe_unused, nodiscard]] uint32_t period() const noexcept
-   {
-      return m_variance.period();
-   }
-
-   [[maybe_unused, nodiscard]] double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
-   {
-      auto mean{0e0};
-      auto const variance{m_variance.pick(inSequenceNumber, inValue, mean),};
-      return variance_to_z_score(inSequenceNumber, inValue, mean, variance);
-   }
-
-   [[maybe_unused]] void reset() noexcept
-   {
-      m_variance.reset();
-   }
-
-private:
-   variance<> m_variance;
-
-   [[nodiscard]] double variance_to_z_score(
       uint64_t const inSequenceNumber,
       double const inValue,
       double const inMean,

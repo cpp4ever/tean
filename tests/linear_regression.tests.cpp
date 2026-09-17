@@ -45,7 +45,7 @@ namespace tean::tests
 template<uint32_t test_period>
 void test_linear_regression_step(TeAn &fixture, decimal const testPriceStep)
 {
-   constexpr auto testLookbackPeriod{linear_regression<test_period>::lookback_period,};
+   constexpr auto testLookbackPeriod{linear_regression<test_period>::lookback_period(),};
    constexpr auto testIterationsNumber{test_period * 10u,};
    auto const testPrices{std::make_unique<double[]>(testLookbackPeriod + testIterationsNumber),};
    auto const testIntercepts{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};

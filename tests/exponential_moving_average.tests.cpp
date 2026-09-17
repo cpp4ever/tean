@@ -44,7 +44,7 @@ namespace tean::tests
 template<uint32_t test_period>
 void test_exponential_moving_average_step(TeAn &fixture, decimal const testPriceStep)
 {
-   constexpr auto testLookbackPeriod{exponential_moving_average<test_period, test_period>::lookback_period,};
+   constexpr auto testLookbackPeriod{exponential_moving_average<test_period, test_period>::lookback_period(),};
    constexpr auto testIterationsNumber{test_period * 10u,};
    auto const testPrices{std::make_unique<double[]>(testLookbackPeriod + testIterationsNumber),};
    auto const testValues{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};

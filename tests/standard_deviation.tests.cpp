@@ -47,7 +47,7 @@ namespace tean::tests
 template<uint32_t test_period>
 void test_standard_deviation_step(TeAn &fixture, decimal const testPriceStep)
 {
-   constexpr auto testLookbackPeriod{standard_deviation<test_period>::lookback_period,};
+   constexpr auto testLookbackPeriod{standard_deviation<test_period>::lookback_period(),};
    constexpr auto testIterationsNumber{test_period * 10u,};
    auto const testPrices{std::make_unique<double[]>(testLookbackPeriod + testIterationsNumber),};
    auto const testValues{std::make_unique<testing::Matcher<double>[]>(testIterationsNumber),};
@@ -92,7 +92,7 @@ void test_standard_deviation_step(TeAn &fixture, decimal const testPriceStep)
          }
       }
       auto const testMatcher{testing::ElementsAreArray(testValues.get(), testIterationsNumber),};
-      std::vector<double> expectedValues;
+      std::vector<double> expectedValues{};
       expectedValues.resize(testIterationsNumber, std::numeric_limits<double>::signaling_NaN());
       {
          ASSERT_EQ(TA_STDDEV_Lookback(static_cast<int>(test_period), 1e0), static_cast<int>(testLookbackPeriod));

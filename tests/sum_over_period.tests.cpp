@@ -46,7 +46,7 @@ namespace tean::tests
 template<uint32_t test_period>
 void test_sum_over_period_step(TeAn &fixture, decimal const testPriceStep)
 {
-   constexpr auto testLookbackPeriod{sum_over_period<test_period>::lookback_period,};
+   constexpr auto testLookbackPeriod{sum_over_period<test_period>::lookback_period(),};
    constexpr auto testIterationsNumber{test_period * 10u,};
    auto const testPrices{std::make_unique<double[]>(testLookbackPeriod + testIterationsNumber),};
    auto testValues = std::make_unique<testing::Matcher<double>[]>(testIterationsNumber);

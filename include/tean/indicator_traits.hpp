@@ -23,25 +23,21 @@
    SOFTWARE.
 */
 
-#include "tean/standard_deviation.hpp" /// for tean::standard_deviation
+#pragma once
 
-#include <cassert> /// for assert
-#include <cmath> /// for std::isfinite, std::sqrt
-#include <cstdint> /// for uint64_t
-#include <limits> /// for std::numeric_limits
+#include <cstdint> /// for uint32_t
 
 namespace tean
 {
 
-double standard_deviation<static_cast<uint32_t>(-1)>::variance_to_standard_deviation(uint64_t const inSequenceNumber, double const inVariance) const noexcept
+constexpr auto lazy_indicator{static_cast<uint32_t>(-1),};
+
+namespace internals
 {
-   if (lookback_period() <= inSequenceNumber) [[likely]]
-   {
-      assert(true == std::isfinite(inVariance));
-      return (0e0 >= inVariance) ? 0e0 : std::sqrt(inVariance);
-   }
-   assert(false == std::isfinite(inVariance));
-   return std::numeric_limits<double>::signaling_NaN();
+
+template<typename type>
+struct indicator_traits;
+
 }
 
 }
