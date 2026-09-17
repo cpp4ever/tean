@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "tean/sequence_checker.hpp" ///< for tean::sequence_checker
+
 #include <cstdint> /// for uint32_t, uint64_t
 
 namespace tean
@@ -33,13 +35,7 @@ namespace tean
 class [[nodiscard]] ease_of_movement final
 {
 public:
-   [[maybe_unused, nodiscard]] ease_of_movement() noexcept :
-#if (not defined(NDEBUG))
-      m_prevSequenceNumber(0),
-#endif
-      m_mean(0.0)
-   {}
-
+   [[maybe_unused, nodiscard]] ease_of_movement() noexcept = default;
    ease_of_movement(ease_of_movement &&) = delete;
    ease_of_movement(ease_of_movement const &) = delete;
 
@@ -50,24 +46,24 @@ public:
 
    [[maybe_unused, nodiscard]] static constexpr uint32_t lookback_period() noexcept
    {
-      return 1;
+      return 1u;
    }
 
    [[nodiscard]] double pick(uint64_t inSequenceNumber, double inHigh, double inLow, double inVolume) const noexcept;
 
    [[maybe_unused]] void reset() noexcept
    {
+      m_mean = 0e0;
 #if (not defined(NDEBUG))
-      m_prevSequenceNumber = 0;
+      m_sequenceChecker.reset();
 #endif
-      m_mean = 0.0;
    }
 
 private:
+   double m_mean{0e0,};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber;
+   sequence_checker m_sequenceChecker{};
 #endif
-   double m_mean;
 };
 
 }

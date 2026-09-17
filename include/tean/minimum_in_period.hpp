@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "tean/sequence_checker.hpp" ///< for tean::sequence_checker
+
 #include <cstdint> /// for uint32_t, uint64_t
 #include <memory> /// for std::unique_ptr
 #include <utility> /// for std::pair
@@ -63,10 +65,10 @@ private:
    uint32_t const m_period;
    uint32_t const m_lookbackPeriod;
    std::unique_ptr<double[]> const m_values;
+   uint32_t m_minimumValueIndex{0u,};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber;
+   sequence_checker m_sequenceChecker{};
 #endif
-   uint32_t m_minimumValueIndex;
 
    [[nodiscard]] std::pair<uint32_t, double> get_minimum(uint32_t inIndex, double inValue) const noexcept;
 };

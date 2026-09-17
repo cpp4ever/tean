@@ -35,7 +35,7 @@
 #include <ta_func.h> /// for TA_SMA, TA_SMA_Lookback, TA_SUCCESS
 
 #include <algorithm> /// for std::fill
-#include <cmath> /// for std::isnan
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for int64_t, uint32_t
 #include <limits> /// for std::numeric_limits
 #include <memory> /// for std::addressof, std::make_unique
@@ -47,14 +47,14 @@ namespace tean::tests
 TEST_F(TeAn, SimpleMovingAverage)
 {
    constexpr uint32_t testMinPeriod = 2;
-   constexpr uint32_t testMaxPeriod = 100;
+   constexpr auto testMaxPeriod{100u,};
    auto const testStep = [&] (decimal const &testPriceStep)
    {
-      auto const testPricePrecision = inverted_power_of_ten[testPriceStep.scale / 2] * inverted_power_of_ten[6];
+      auto const testPricePrecision = inverted_power_of_ten[testPriceStep.scale / 2u] * inverted_power_of_ten[6u];
       auto const testPriceStepValue = static_cast<double>(testPriceStep);
       for (auto testPeriod = testMinPeriod; testPeriod <= testMaxPeriod; ++testPeriod)
       {
-         auto const testIterationsNumber = testPeriod * 10;
+         auto const testIterationsNumber{testPeriod * 10u,};
          simple_moving_average testIndicator{testPeriod};
          ASSERT_EQ(testPeriod, testIndicator.period());
          auto testPrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
@@ -63,7 +63,7 @@ TEST_F(TeAn, SimpleMovingAverage)
             tean::sum_over_period<> testAdditionalIndicator{testPeriod,};
             for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
             {
-               auto const testPrice = testPriceStepValue * random_number<int64_t>(100, 1000);
+               auto const testPrice = testPriceStepValue * random_number(100u, 1000u);
                auto const testAdditionalValue = testAdditionalIndicator.calc(testIteration, testPrice);
                auto testPickAdditionalValue = 0.0;
                auto const testPickValue = testIndicator.pick(testIteration, testPrice, testPickAdditionalValue);
@@ -79,7 +79,7 @@ TEST_F(TeAn, SimpleMovingAverage)
             }
             for (uint32_t testIteration = 0; testIteration < testIterationsNumber; ++testIteration)
             {
-               auto const testPrice = testPriceStepValue * random_number<int64_t>(100, 1000);
+               auto const testPrice = testPriceStepValue * random_number(100u, 1000u);
                auto const testAdditionalValue = testAdditionalIndicator.calc(testIndicator.lookback_period() + testIteration, testPrice);
                auto testPickAdditionalValue = 0.0;
                auto const testPickValue = testIndicator.pick(testIndicator.lookback_period() + testIteration, testPrice, testPickAdditionalValue);
@@ -131,7 +131,7 @@ TEST_F(TeAn, SimpleMovingAverage)
                auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period(), testPrice);
                ASSERT_FALSE(std::isnan(testCalcValue));
                ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
-               ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
+               ASSERT_THAT(expectedValues[0u], testing::DoubleNear(testCalcValue, testPricePrecision));
             }
          }
          std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
@@ -145,8 +145,8 @@ TEST_F(TeAn, SimpleMovingAverage)
          }
       }
    };
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12}));
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 12,}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale =  0,}));
 }
 
 }

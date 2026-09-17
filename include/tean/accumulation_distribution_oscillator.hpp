@@ -78,8 +78,8 @@ public:
    [[maybe_unused]] void reset() noexcept
    {
       m_accumulationDistributionLine.reset();
-      m_fastMovingAverage = 0.0;
-      m_slowMovingAverage = 0.0;
+      m_fastMovingAverage = 0e0;
+      m_slowMovingAverage = 0e0;
    }
 
 private:
@@ -88,8 +88,8 @@ private:
    double const m_fastSmoothingFactor;
    double const m_slowSmoothingFactor;
    accumulation_distribution_line m_accumulationDistributionLine;
-   double m_fastMovingAverage;
-   double m_slowMovingAverage;
+   double m_fastMovingAverage{0e0,};
+   double m_slowMovingAverage{0e0,};
 
    [[nodiscard]] double do_calc(uint64_t inSequenceNumber, double inAccumulationDistribution) noexcept;
 

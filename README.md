@@ -24,7 +24,6 @@
 -->
 
 [![Linux](https://github.com/cpp4ever/tean/actions/workflows/linux.yml/badge.svg)](https://github.com/cpp4ever/tean/actions/workflows/linux.yml)
-[![macOS](https://github.com/cpp4ever/tean/actions/workflows/macos.yml/badge.svg)](https://github.com/cpp4ever/tean/actions/workflows/macos.yml)
 [![Windows](https://github.com/cpp4ever/tean/actions/workflows/windows.yml/badge.svg)](https://github.com/cpp4ever/tean/actions/workflows/windows.yml)
 [![codecov](https://codecov.io/gh/cpp4ever/tean/graph/badge.svg?token=ZKA0RCKR42)](https://codecov.io/gh/cpp4ever/tean)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fcpp4ever%2Ftean.svg?type=small)](https://app.fossa.com/projects/git%2Bgithub.com%2Fcpp4ever%2Ftean?ref=badge_small)

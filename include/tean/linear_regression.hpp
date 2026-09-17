@@ -26,6 +26,7 @@
 #pragma once
 
 #include "tean/indicator_traits.hpp" ///< for tean::internals::indicator_traits, tean::lazy_indicator
+#include "tean/sequence_checker.hpp" ///< for tean::sequence_checker
 
 #include <algorithm> /// for std::ranges::fill
 #include <array> /// for std::array
@@ -207,8 +208,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr linear_regression_result calc(uint64_t const inSequenceNumber, double const inValue) noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
-      m_prevSequenceNumber = inSequenceNumber;
+      assert(true == m_sequenceChecker.calc(inSequenceNumber));
 #endif
       assert(true == std::isfinite(inValue));
       m_storage.yValues[inSequenceNumber % period()] = inValue;
@@ -243,14 +243,14 @@ public:
    {
 #if (not defined(NDEBUG))
       std::ranges::fill(m_storage.yValues, std::numeric_limits<double>::signaling_NaN());
-      m_prevSequenceNumber = 0ull;
+      m_sequenceChecker.reset();
 #endif
    }
 
 private:
    internals::linear_regression_storage<indicator_period, y_values_allocator> m_storage;
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ull,};
+   sequence_checker m_sequenceChecker{};
 #endif
 
    [[nodiscard]] constexpr double divisor() const noexcept requires(lazy_indicator == indicator_period)

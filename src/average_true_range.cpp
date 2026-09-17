@@ -35,10 +35,8 @@ namespace tean
 {
 
 average_true_range::average_true_range(uint32_t const inPeriod, uint32_t const inUntrustedPeriod) noexcept :
-   m_period(inPeriod),
-   m_lookbackPeriod(inUntrustedPeriod + inPeriod),
-   m_trueRange(),
-   m_value(0.0)
+   m_period{inPeriod,},
+   m_lookbackPeriod{inUntrustedPeriod + inPeriod,}
 {
    assert(m_trueRange.lookback_period() < period());
 }
@@ -48,10 +46,9 @@ double average_true_range::do_calc(uint64_t const inSequenceNumber, double const
    if (m_trueRange.lookback_period() <= inSequenceNumber) [[likely]]
    {
       assert(true == std::isfinite(inTrueRange));
-      assert(false == std::isnan(inTrueRange));
       if (period() < inSequenceNumber) [[likely]]
       {
-         m_value = (m_value * static_cast<double>(period() - 1) + inTrueRange) / static_cast<double>(period());
+         m_value = (m_value * (period() - 1u) + inTrueRange) / period();
          if (lookback_period() <= inSequenceNumber) [[likely]]
          {
             return m_value;
@@ -62,7 +59,7 @@ double average_true_range::do_calc(uint64_t const inSequenceNumber, double const
          m_value += inTrueRange;
          if (period() == inSequenceNumber) [[unlikely]]
          {
-            m_value /= static_cast<double>(period());
+            m_value /= period();
             if (lookback_period() == inSequenceNumber)
             {
                return m_value;
@@ -82,13 +79,12 @@ double average_true_range::do_pick(uint64_t const inSequenceNumber, double const
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
       assert(true == std::isfinite(inTrueRange));
-      assert(false == std::isnan(inTrueRange));
       if (period() < inSequenceNumber) [[likely]]
       {
-         return (m_value * static_cast<double>(period() - 1) + inTrueRange) / static_cast<double>(period());
+         return (m_value * (period() - 1u) + inTrueRange) / period();
       }
       assert(period() == lookback_period());
-      return (m_value + inTrueRange) / static_cast<double>(period());
+      return (m_value + inTrueRange) / period();
    }
    return std::numeric_limits<double>::signaling_NaN();
 }

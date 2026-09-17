@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "tean/sequence_checker.hpp" ///< for tean::sequence_checker
+
 #include <cstdint> /// for uint64_t
 
 namespace tean
@@ -33,13 +35,7 @@ namespace tean
 class [[nodiscard]] accumulation_distribution_line final
 {
 public:
-   [[maybe_unused, nodiscard]] accumulation_distribution_line() noexcept :
-#if (not defined(NDEBUG))
-      m_prevSequenceNumber(0),
-#endif
-      m_value(0.0)
-   {}
-
+   [[maybe_unused, nodiscard]] accumulation_distribution_line() noexcept = default;
    accumulation_distribution_line(accumulation_distribution_line &&) = delete;
    accumulation_distribution_line(accumulation_distribution_line const &) = delete;
 
@@ -52,17 +48,17 @@ public:
 
    [[maybe_unused]] void reset() noexcept
    {
+      m_value = 0e0;
 #if (not defined(NDEBUG))
-      m_prevSequenceNumber = 0;
+      m_sequenceChecker.reset();
 #endif
-      m_value = 0.0;
    }
 
 private:
+   double m_value{0e0,};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber;
+   sequence_checker m_sequenceChecker{};
 #endif
-   double m_value;
 };
 
 }

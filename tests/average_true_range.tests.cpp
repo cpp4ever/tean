@@ -46,15 +46,15 @@ namespace tean::tests
 TEST_F(TeAn, AverageTrueRange)
 {
    constexpr uint32_t testMinPeriod = 2;
-   constexpr uint32_t testMaxPeriod = 100;
+   constexpr auto testMaxPeriod{100u,};
    auto const testStep = [&] (decimal const &testPriceStep)
    {
-      auto const testPricePrecision = inverted_power_of_ten[std::min<uint32_t>(6, testPriceStep.scale)];
+      auto const testPricePrecision = inverted_power_of_ten[std::min<uint32_t>(6u, testPriceStep.scale)];
       auto const testPriceStepValue = static_cast<double>(testPriceStep);
       for (auto testPeriod = testMinPeriod; testPeriod <= testMaxPeriod; ++testPeriod)
       {
-         auto const testIterationsNumber = testPeriod * 10;
-         auto const testUnstablePeriod = random_number<uint32_t>(0, testPeriod);
+         auto const testIterationsNumber{testPeriod * 10u,};
+         auto const testUnstablePeriod = random_number(0u, testPeriod);
          average_true_range testIndicator{testPeriod, testUnstablePeriod};
          ASSERT_EQ(testPeriod, testIndicator.period());
          auto testHighPrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
@@ -65,9 +65,9 @@ TEST_F(TeAn, AverageTrueRange)
             tean::true_range testAdditionalIndicator{};
             for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
             {
-               auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
-               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
+               auto const testClosePrice = testPriceStepValue * random_number(100u, 1000u);
+               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number(0u, 50u);
+               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number(0u, 50u);
                auto const testAdditionalValue = testAdditionalIndicator.calc(testIteration, testHighPrice, testLowPrice, testClosePrice);
                auto testPickAdditionalValue = 0.0;
                auto const testPickValue = testIndicator.pick(testIteration, testHighPrice, testLowPrice, testClosePrice, testPickAdditionalValue);
@@ -93,9 +93,9 @@ TEST_F(TeAn, AverageTrueRange)
             }
             for (uint32_t testIteration = 0; testIteration < testIterationsNumber; ++testIteration)
             {
-               auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
-               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
+               auto const testClosePrice = testPriceStepValue * random_number(100u, 1000u);
+               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number(0u, 50u);
+               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number(0u, 50u);
                auto const testAdditionalValue = testAdditionalIndicator.calc(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice);
                auto testPickAdditionalValue = 0.0;
                auto const testPickValue = testIndicator.pick(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice, testPickAdditionalValue);
@@ -156,13 +156,13 @@ TEST_F(TeAn, AverageTrueRange)
                auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period(), testHighPrice, testLowPrice, testClosePrice);
                ASSERT_FALSE(std::isnan(testCalcValue));
                ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
-               ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
+               ASSERT_THAT(expectedValues[0u], testing::DoubleNear(testCalcValue, testPricePrecision));
             }
          }
       }
    };
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12}));
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 12,}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale =  0,}));
 }
 
 }

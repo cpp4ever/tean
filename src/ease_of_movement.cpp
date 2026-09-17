@@ -26,7 +26,7 @@
 #include "tean/ease_of_movement.hpp" /// for tean::ease_of_movement
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isfinite, std::isnan
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for uint64_t
 #include <limits> /// for std::numeric_limits
 
@@ -36,22 +36,18 @@ namespace tean
 double ease_of_movement::calc(uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inVolume) noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
-   m_prevSequenceNumber = inSequenceNumber;
+   assert(true == m_sequenceChecker.calc(inSequenceNumber));
 #endif
    assert(true == std::isfinite(inHigh));
-   assert(false == std::isnan(inHigh));
    assert(true == std::isfinite(inLow));
-   assert(false == std::isnan(inLow));
    assert(true == std::isfinite(inVolume));
-   assert(false == std::isnan(inVolume));
    assert(inHigh >= inLow);
-   assert(0.0 <= inVolume);
-   auto emv = std::numeric_limits<double>::signaling_NaN();
-   auto const mean = (inHigh + inLow) * 0.5;
-   if (0 < inSequenceNumber) [[likely]]
+   assert(0e0 <= inVolume);
+   auto emv{std::numeric_limits<double>::signaling_NaN(),};
+   auto const mean{(inHigh + inLow) * 5e-1,};
+   if (0ull < inSequenceNumber) [[likely]]
    {
-      auto const boxRatio = inVolume / 10000.0 / (inHigh - inLow);
+      auto const boxRatio{inVolume / 10000e0 / (inHigh - inLow),};
       emv = (mean - m_mean) / boxRatio;
    }
    m_mean = mean;
@@ -61,20 +57,17 @@ double ease_of_movement::calc(uint64_t const inSequenceNumber, double const inHi
 double ease_of_movement::pick(uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inVolume) const noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+   assert(true == m_sequenceChecker.pick(inSequenceNumber));
 #endif
    assert(true == std::isfinite(inHigh));
-   assert(false == std::isnan(inHigh));
    assert(true == std::isfinite(inLow));
-   assert(false == std::isnan(inLow));
    assert(true == std::isfinite(inVolume));
-   assert(false == std::isnan(inVolume));
    assert(inHigh >= inLow);
-   assert(0.0 <= inVolume);
-   if (0 < inSequenceNumber) [[likely]]
+   assert(0e0 <= inVolume);
+   if (0e0 < inSequenceNumber) [[likely]]
    {
-      auto const mean = (inHigh + inLow) * 0.5;
-      auto const boxRatio = inVolume / 10000.0 / (inHigh - inLow);
+      auto const mean{(inHigh + inLow) * 5e-1,};
+      auto const boxRatio{inVolume / 10000e0 / (inHigh - inLow),};
       return (mean - m_mean) / boxRatio;
    }
    return std::numeric_limits<double>::signaling_NaN();

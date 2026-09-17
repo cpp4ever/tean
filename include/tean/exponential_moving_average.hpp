@@ -26,6 +26,7 @@
 #pragma once
 
 #include "tean/indicator_traits.hpp" ///< for tean::internals::indicator_traits, tean::lazy_indicator
+#include "tean/sequence_checker.hpp" ///< for tean::sequence_checker
 
 #include <cassert> /// for assert
 #include <cmath> /// for std::isfinite
@@ -159,8 +160,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue) noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
-      m_prevSequenceNumber = inSequenceNumber;
+      assert(true == m_sequenceChecker.calc(inSequenceNumber));
 #endif
       assert(true == std::isfinite(inValue));
       if (period() <= inSequenceNumber) [[likely]]
@@ -209,7 +209,7 @@ public:
    [[maybe_unused, nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue) const noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
+      assert(true == m_sequenceChecker.pick(inSequenceNumber));
 #endif
       assert(true == std::isfinite(inValue));
       if ((period() <= inSequenceNumber) && (lookback_period() <= inSequenceNumber)) [[likely]]
@@ -227,7 +227,7 @@ public:
    {
       m_value = 0e0;
 #if (not defined(NDEBUG))
-      m_prevSequenceNumber = 0ull;
+      m_sequenceChecker.reset();
 #endif
    }
 
@@ -240,7 +240,7 @@ private:
    options const m_options;
    double m_value{0e0,};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ull,};
+   sequence_checker m_sequenceChecker{};
 #endif
 };
 

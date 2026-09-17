@@ -27,7 +27,7 @@
 
 #include <algorithm> /// for std::fill
 #include <cassert> /// for assert
-#include <cmath> /// for std::isfinite, std::isnan
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 #include <memory> /// for std::make_unique
@@ -38,17 +38,12 @@ namespace tean
 {
 
 williams_percent_range::williams_percent_range(uint32_t const inPeriod) :
-   m_period(inPeriod),
-   m_lookbackPeriod(inPeriod - 1),
-   m_highValues(std::make_unique<double[]>(inPeriod)),
-   m_lowValues(std::make_unique<double[]>(inPeriod)),
-#if (not defined(NDEBUG))
-   m_prevSequenceNumber(0),
-#endif
-   m_highestHighIndex(0),
-   m_lowestLowIndex(0)
+   m_period{inPeriod,},
+   m_lookbackPeriod{inPeriod - 1u,},
+   m_highValues{std::make_unique<double[]>(inPeriod),},
+   m_lowValues{std::make_unique<double[]>(inPeriod),}
 {
-   assert(1 < period());
+   assert(1u < period());
 #if (not defined(NDEBUG))
    std::fill(m_highValues.get(), m_highValues.get() + period(), std::numeric_limits<double>::signaling_NaN());
    std::fill(m_lowValues.get(), m_lowValues.get() + period(), std::numeric_limits<double>::signaling_NaN());
@@ -58,15 +53,11 @@ williams_percent_range::williams_percent_range(uint32_t const inPeriod) :
 double williams_percent_range::calc(uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inClose) noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
-   m_prevSequenceNumber = inSequenceNumber;
+   assert(true == m_sequenceChecker.calc(inSequenceNumber));
 #endif
    assert(true == std::isfinite(inHigh));
-   assert(false == std::isnan(inHigh));
    assert(true == std::isfinite(inLow));
-   assert(false == std::isnan(inLow));
    assert(true == std::isfinite(inClose));
-   assert(false == std::isnan(inClose));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);
@@ -80,14 +71,11 @@ double williams_percent_range::calc(uint64_t const inSequenceNumber, double cons
 double williams_percent_range::pick(uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inClose) const noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+   assert(true == m_sequenceChecker.pick(inSequenceNumber));
 #endif
    assert(true == std::isfinite(inHigh));
-   assert(false == std::isnan(inHigh));
    assert(true == std::isfinite(inLow));
-   assert(false == std::isnan(inLow));
    assert(true == std::isfinite(inClose));
-   assert(false == std::isnan(inClose));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);
@@ -107,22 +95,24 @@ void williams_percent_range::reset() noexcept
 #if (not defined(NDEBUG))
    std::fill(m_highValues.get(), m_highValues.get() + period(), std::numeric_limits<double>::signaling_NaN());
    std::fill(m_lowValues.get(), m_lowValues.get() + period(), std::numeric_limits<double>::signaling_NaN());
-   m_prevSequenceNumber = 0;
 #endif
-   m_highestHighIndex = 0;
-   m_lowestLowIndex = 0;
+   m_highestHighIndex = 0u;
+   m_lowestLowIndex = 0u;
+#if (not defined(NDEBUG))
+   m_sequenceChecker.reset();
+#endif
 }
 
 double williams_percent_range::do_lookback_calc(uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inClose) noexcept
 {
-   auto const arrayIndex = static_cast<uint32_t>(inSequenceNumber % period());
+   auto const arrayIndex{static_cast<uint32_t>(inSequenceNumber % period()),};
    m_highValues[arrayIndex] = inHigh;
    m_lowValues[arrayIndex] = inLow;
    if (lookback_period() == inSequenceNumber) [[unlikely]]
    {
-      m_highestHighIndex = 0;
-      auto highestHigh = m_highValues[0];
-      for (uint32_t highValuesIndex = 1; highValuesIndex < period(); ++highValuesIndex)
+      m_highestHighIndex = 0u;
+      auto highestHigh{m_highValues[0u],};
+      for (auto highValuesIndex{1u,}; highValuesIndex < period(); ++highValuesIndex)
       {
          if (m_highValues[highValuesIndex] > highestHigh)
          {
@@ -130,9 +120,9 @@ double williams_percent_range::do_lookback_calc(uint64_t const inSequenceNumber,
             highestHigh = m_highValues[highValuesIndex];
          }
       }
-      m_lowestLowIndex = 0;
-      auto lowestLow = m_lowValues[0];
-      for (uint32_t lowValuesIndex = 1; lowValuesIndex < period(); ++lowValuesIndex)
+      m_lowestLowIndex = 0u;
+      auto lowestLow{m_lowValues[0u],};
+      for (auto lowValuesIndex{1u,}; lowValuesIndex < period(); ++lowValuesIndex)
       {
          if (m_lowValues[lowValuesIndex] < lowestLow)
          {
@@ -141,24 +131,24 @@ double williams_percent_range::do_lookback_calc(uint64_t const inSequenceNumber,
          }
       }
       assert(highestHigh >= lowestLow);
-      auto const delta = (highestHigh - lowestLow);
-      return (0.0 == delta) ? 0.0 : (-100.0 * (highestHigh - inClose) / delta);
+      auto const delta{highestHigh - lowestLow,};
+      return (0e0 == delta) ? 0e0 : (-100e0 * (highestHigh - inClose) / delta);
    }
    return std::numeric_limits<double>::signaling_NaN();
 }
 
 double williams_percent_range::do_lookback_pick(double const inHigh, double const inLow, double const inClose) const noexcept
 {
-   auto highestHigh = inHigh;
-   for (uint32_t highValuesIndex = 0; highValuesIndex < lookback_period(); ++highValuesIndex)
+   auto highestHigh{inHigh,};
+   for (auto highValuesIndex{0u,}; highValuesIndex < lookback_period(); ++highValuesIndex)
    {
       if (m_highValues[highValuesIndex] > highestHigh)
       {
          highestHigh = m_highValues[highValuesIndex];
       }
    }
-   auto lowestLow = inLow;
-   for (uint32_t lowValuesIndex = 0; lowValuesIndex < lookback_period(); ++lowValuesIndex)
+   auto lowestLow{inLow,};
+   for (auto lowValuesIndex{0u,}; lowValuesIndex < lookback_period(); ++lowValuesIndex)
    {
       if (m_lowValues[lowValuesIndex] < lowestLow)
       {
@@ -166,8 +156,8 @@ double williams_percent_range::do_lookback_pick(double const inHigh, double cons
       }
    }
    assert(highestHigh >= lowestLow);
-   auto const delta = (highestHigh - lowestLow);
-   return (0.0 == delta) ? 0.0 : (-100.0 * (highestHigh - inClose) / delta);
+   auto const delta{highestHigh - lowestLow,};
+   return (0e0 == delta) ? 0e0 : (-100e0 * (highestHigh - inClose) / delta);
 }
 
 double williams_percent_range::do_regular_calc(uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inClose) noexcept
@@ -175,7 +165,7 @@ double williams_percent_range::do_regular_calc(uint64_t const inSequenceNumber, 
    double highestHigh;
    double lowestLow;
    {
-      auto const arrayIndex = static_cast<uint32_t>(inSequenceNumber % period());
+      auto const arrayIndex{static_cast<uint32_t>(inSequenceNumber % period()),};
       std::tie(m_highestHighIndex, highestHigh) = get_highest_high(arrayIndex, inHigh);
       m_highValues[arrayIndex] = inHigh;
       std::tie(m_lowestLowIndex, lowestLow) = get_lowest_low(arrayIndex, inLow);
@@ -183,17 +173,17 @@ double williams_percent_range::do_regular_calc(uint64_t const inSequenceNumber, 
    }
    assert(highestHigh >= lowestLow);
    auto const delta = (highestHigh - lowestLow);
-   return (0.0 == delta) ? 0.0 : (-100.0 * (highestHigh - inClose) / delta);
+   return (0e0 == delta) ? 0e0 : (-100e0 * (highestHigh - inClose) / delta);
 }
 
 double williams_percent_range::do_regular_pick(uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inClose) const noexcept
 {
-   auto const arrayIndex = static_cast<uint32_t>(inSequenceNumber % period());
-   auto const highestHigh = get_highest_high(arrayIndex, inHigh).second;
-   auto const lowestLow = get_lowest_low(arrayIndex, inLow).second;
+   auto const arrayIndex{static_cast<uint32_t>(inSequenceNumber % period()),};
+   auto const highestHigh{get_highest_high(arrayIndex, inHigh).second,};
+   auto const lowestLow{get_lowest_low(arrayIndex, inLow).second,};
    assert(highestHigh >= lowestLow);
-   auto const delta = (highestHigh - lowestLow);
-   return (0.0 == delta) ? 0.0 : (-100.0 * (highestHigh - inClose) / delta);
+   auto const delta{highestHigh - lowestLow,};
+   return (0e0 == delta) ? 0e0 : (-100e0 * (highestHigh - inClose) / delta);
 }
 
 std::pair<uint32_t, double> williams_percent_range::get_highest_high(uint32_t const inIndex, double const inValue) const noexcept
@@ -204,9 +194,9 @@ std::pair<uint32_t, double> williams_percent_range::get_highest_high(uint32_t co
    }
    if (inIndex == m_highestHighIndex)
    {
-      auto highestHighIndex = inIndex;
-      auto highestHigh = inValue;
-      for (uint32_t highValuesIndex = 0; highValuesIndex < period(); ++highValuesIndex)
+      auto highestHighIndex{inIndex,};
+      auto highestHigh{inValue,};
+      for (auto highValuesIndex{0u,}; highValuesIndex < period(); ++highValuesIndex)
       {
          if ((inIndex != highValuesIndex) && (m_highValues[highValuesIndex] > highestHigh))
          {
@@ -214,22 +204,22 @@ std::pair<uint32_t, double> williams_percent_range::get_highest_high(uint32_t co
             highestHigh = m_highValues[highValuesIndex];
          }
       }
-      return {highestHighIndex, highestHigh};
+      return {highestHighIndex, highestHigh,};
    }
-   return {m_highestHighIndex, m_highValues[m_highestHighIndex]};
+   return {m_highestHighIndex, m_highValues[m_highestHighIndex],};
 }
 
 std::pair<uint32_t, double> williams_percent_range::get_lowest_low(uint32_t const inIndex, double const inValue) const noexcept
 {
    if (inValue <= m_lowValues[m_lowestLowIndex])
    {
-      return {inIndex, inValue};
+      return {inIndex, inValue,};
    }
    if (inIndex == m_lowestLowIndex)
    {
-      auto lowestLowIndex = inIndex;
-      auto lowestLow = inValue;
-      for (uint32_t lowValuesIndex = 0; lowValuesIndex < period(); ++lowValuesIndex)
+      auto lowestLowIndex{inIndex,};
+      auto lowestLow{inValue,};
+      for (auto lowValuesIndex{0u,}; lowValuesIndex < period(); ++lowValuesIndex)
       {
          if ((inIndex != lowValuesIndex) && (m_lowValues[lowValuesIndex] < lowestLow))
          {
@@ -237,9 +227,9 @@ std::pair<uint32_t, double> williams_percent_range::get_lowest_low(uint32_t cons
             lowestLow = m_lowValues[lowValuesIndex];
          }
       }
-      return {lowestLowIndex, lowestLow};
+      return {lowestLowIndex, lowestLow,};
    }
-   return {m_lowestLowIndex, m_lowValues[m_lowestLowIndex]};
+   return {m_lowestLowIndex, m_lowValues[m_lowestLowIndex],};
 }
 
 }

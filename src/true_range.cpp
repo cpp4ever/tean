@@ -27,7 +27,7 @@
 
 #include <algorithm> /// for std::max
 #include <cassert> /// for assert
-#include <cmath> /// for std::isfinite, std::isnan
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for uint64_t
 #include <cstdlib> /// for std::abs
 #include <limits> /// for std::numeric_limits
@@ -38,15 +38,11 @@ namespace tean
 double true_range::calc(uint64_t const inSequenceNumber, double const inHigh, double const inLow, double const inClose) noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
-   m_prevSequenceNumber = inSequenceNumber;
+   assert(true == m_sequenceChecker.calc(inSequenceNumber));
 #endif
    assert(true == std::isfinite(inHigh));
-   assert(false == std::isnan(inHigh));
    assert(true == std::isfinite(inLow));
-   assert(false == std::isnan(inLow));
    assert(true == std::isfinite(inClose));
-   assert(false == std::isnan(inClose));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);
@@ -58,14 +54,11 @@ double true_range::calc(uint64_t const inSequenceNumber, double const inHigh, do
 double true_range::pick(uint64_t const inSequenceNumber, double const inHigh, double const inLow, [[maybe_unused]] double const inClose) const noexcept
 {
 #if (not defined(NDEBUG))
-   assert(((m_prevSequenceNumber + 1) == inSequenceNumber) || ((0 == m_prevSequenceNumber) && (0 == inSequenceNumber)));
+   assert(true == m_sequenceChecker.pick(inSequenceNumber));
 #endif
    assert(true == std::isfinite(inHigh));
-   assert(false == std::isnan(inHigh));
    assert(true == std::isfinite(inLow));
-   assert(false == std::isnan(inLow));
    assert(true == std::isfinite(inClose));
-   assert(false == std::isnan(inClose));
    assert(inHigh >= inLow);
    assert(inHigh >= inClose);
    assert(inClose >= inLow);

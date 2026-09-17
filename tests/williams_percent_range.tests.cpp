@@ -46,13 +46,13 @@ namespace tean::tests
 TEST_F(TeAn, WilliamsPercentRange)
 {
    constexpr uint32_t testMinPeriod = 2;
-   constexpr uint32_t testMaxPeriod = 100;
+   constexpr auto testMaxPeriod{100u,};
    auto const testStep = [&] (decimal const &testPriceStep)
    {
       auto const testPriceStepValue = static_cast<double>(testPriceStep);
       for (auto testPeriod = testMinPeriod; testPeriod <= testMaxPeriod; ++testPeriod)
       {
-         auto const testIterationsNumber = testPeriod * 10;
+         auto const testIterationsNumber{testPeriod * 10u,};
          williams_percent_range testIndicator{testPeriod};
          ASSERT_EQ(testPeriod, testIndicator.period());
          auto testHighPrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
@@ -60,9 +60,9 @@ TEST_F(TeAn, WilliamsPercentRange)
          auto testClosePrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
          for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
          {
-            auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
-            auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-            auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
+            auto const testClosePrice = testPriceStepValue * random_number(100u, 1000u);
+            auto const testHighPrice = testClosePrice + testPriceStepValue * random_number(0u, 50u);
+            auto const testLowPrice = testClosePrice - testPriceStepValue * random_number(0u, 50u);
             auto const testPickValue = testIndicator.pick(testIteration, testHighPrice, testLowPrice, testClosePrice);
             ASSERT_TRUE(std::isnan(testPickValue));
             auto const testCalcValue = testIndicator.calc(testIteration, testHighPrice, testLowPrice, testClosePrice);
@@ -74,9 +74,9 @@ TEST_F(TeAn, WilliamsPercentRange)
          auto testValues = std::make_unique<testing::Matcher<double>[]>(testIterationsNumber);
          for (uint32_t testIteration = 0; testIteration < testIterationsNumber; ++testIteration)
          {
-            auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
-            auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-            auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
+            auto const testClosePrice = testPriceStepValue * random_number(100u, 1000u);
+            auto const testHighPrice = testClosePrice + testPriceStepValue * random_number(0u, 50u);
+            auto const testLowPrice = testClosePrice - testPriceStepValue * random_number(0u, 50u);
             auto const testPickValue = testIndicator.pick(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice);
             ASSERT_FALSE(std::isnan(testPickValue));
             auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice);
@@ -128,7 +128,7 @@ TEST_F(TeAn, WilliamsPercentRange)
                auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period(), testHighPrice, testLowPrice, testClosePrice);
                ASSERT_FALSE(std::isnan(testCalcValue));
                ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
-               ASSERT_THAT(expectedValues[0], testing::DoubleEq(testCalcValue));
+               ASSERT_THAT(expectedValues[0u], testing::DoubleEq(testCalcValue));
             }
          }
          std::fill(std::begin(expectedValues), std::end(expectedValues), std::numeric_limits<double>::signaling_NaN());
@@ -142,8 +142,8 @@ TEST_F(TeAn, WilliamsPercentRange)
          }
       }
    };
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12}));
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 12,}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale =  0,}));
 }
 
 }

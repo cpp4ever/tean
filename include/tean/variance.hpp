@@ -26,6 +26,7 @@
 #pragma once
 
 #include "tean/indicator_traits.hpp" ///< for tean::internals::indicator_traits, tean::lazy_indicator
+#include "tean/sequence_checker.hpp" ///< for tean::sequence_checker
 
 #include <algorithm> /// for std::ranges::fill
 #include <array> /// for std::array
@@ -169,8 +170,7 @@ public:
    [[nodiscard]] constexpr double calc(uint64_t const inSequenceNumber, double const inValue, double &outMean) noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
-      m_prevSequenceNumber = inSequenceNumber;
+      assert(true == m_sequenceChecker.calc(inSequenceNumber));
 #endif
       assert(true == std::isfinite(inValue));
       if (lookback_period() <= inSequenceNumber) [[likely]]
@@ -211,7 +211,7 @@ public:
    [[nodiscard]] constexpr double pick(uint64_t const inSequenceNumber, double const inValue, double &outMean) const noexcept
    {
 #if (not defined(NDEBUG))
-      assert(((m_prevSequenceNumber + 1ull) == inSequenceNumber) || ((0ull == m_prevSequenceNumber) && (0ull == inSequenceNumber)));
+      assert(true == m_sequenceChecker.pick(inSequenceNumber));
 #endif
       assert(true == std::isfinite(inValue));
       if (lookback_period() <= inSequenceNumber) [[likely]]
@@ -230,14 +230,14 @@ public:
       m_storage.sumOfSquares = 0e0;
 #if (not defined(NDEBUG))
       std::ranges::fill(m_storage.values, std::numeric_limits<double>::signaling_NaN());
-      m_prevSequenceNumber = 0ull;
+      m_sequenceChecker.reset();
 #endif
    }
 
 private:
    internals::variance_storage<indicator_period, values_allocator> m_storage;
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber{0ull,};
+   sequence_checker m_sequenceChecker{};
 #endif
 
    constexpr void do_lookback_calc(uint64_t const inSequenceNumber, double const inValue) noexcept

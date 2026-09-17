@@ -26,7 +26,7 @@
 #include "tean/accumulation_distribution_oscillator.hpp" /// for tean::accumulation_distribution_oscillator
 
 #include <cassert> /// for assert
-#include <cmath> /// for std::isfinite, std::isnan
+#include <cmath> /// for std::isfinite
 #include <cstdint> /// for uint32_t, uint64_t
 #include <limits> /// for std::numeric_limits
 
@@ -34,24 +34,20 @@ namespace tean
 {
 
 accumulation_distribution_oscillator::accumulation_distribution_oscillator(uint32_t const inFastPeriod, uint32_t const inSlowPeriod, uint32_t const inUntrustedPeriod) noexcept :
-   m_period(inSlowPeriod),
-   m_lookbackPeriod(inUntrustedPeriod + inSlowPeriod - 1),
-   m_fastSmoothingFactor(2.0 / static_cast<double>(inFastPeriod + 1)),
-   m_slowSmoothingFactor(2.0 / static_cast<double>(inSlowPeriod + 1)),
-   m_accumulationDistributionLine(),
-   m_fastMovingAverage(0.0),
-   m_slowMovingAverage(0.0)
+   m_period{inSlowPeriod,},
+   m_lookbackPeriod{inUntrustedPeriod + inSlowPeriod - 1u,},
+   m_fastSmoothingFactor{2e0 / (inFastPeriod + 1u),},
+   m_slowSmoothingFactor{2e0 / (inSlowPeriod + 1u),}
 {
-   assert(1 < inFastPeriod);
+   assert(1u < inFastPeriod);
    assert(inFastPeriod < inSlowPeriod);
-   assert((inSlowPeriod - 1) <= lookback_period());
+   assert((inSlowPeriod - 1u) <= lookback_period());
 }
 
 double accumulation_distribution_oscillator::do_calc(uint64_t const inSequenceNumber, double const inAccumulationDistribution) noexcept
 {
    assert(true == std::isfinite(inAccumulationDistribution));
-   assert(false == std::isnan(inAccumulationDistribution));
-   if (0 < inSequenceNumber) [[likely]]
+   if (0ull < inSequenceNumber) [[likely]]
    {
       m_fastMovingAverage += m_fastSmoothingFactor * (inAccumulationDistribution - m_fastMovingAverage);
       m_slowMovingAverage += m_slowSmoothingFactor * (inAccumulationDistribution - m_slowMovingAverage);
@@ -71,7 +67,6 @@ double accumulation_distribution_oscillator::do_calc(uint64_t const inSequenceNu
 double accumulation_distribution_oscillator::do_pick(uint64_t const inSequenceNumber, double const inAccumulationDistribution) const noexcept
 {
    assert(true == std::isfinite(inAccumulationDistribution));
-   assert(false == std::isnan(inAccumulationDistribution));
    if (lookback_period() <= inSequenceNumber) [[likely]]
    {
       auto const fastMovingAverage = m_fastMovingAverage + m_fastSmoothingFactor * (inAccumulationDistribution - m_fastMovingAverage);

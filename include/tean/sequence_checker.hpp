@@ -25,47 +25,44 @@
 
 #pragma once
 
-#include "tean/sequence_checker.hpp" ///< for tean::sequence_checker
-
-#include <cstdint> /// for uint32_t, uint64_t
+#include <cstdint> /// for uint64_t
 
 namespace tean
 {
 
-class [[nodiscard]] true_range final
+class sequence_checker final
 {
 public:
-   [[maybe_unused, nodiscard]] true_range() noexcept = default;
-   true_range(true_range &&) = delete;
-   true_range(true_range const &) = delete;
+   [[maybe_unused, nodiscard]] constexpr sequence_checker() noexcept = default;
+   sequence_checker(sequence_checker &&) = delete;
+   sequence_checker(sequence_checker const &) = delete;
 
-   true_range &operator = (true_range &&) = delete;
-   true_range &operator = (true_range const &) = delete;
+   sequence_checker &operator = (sequence_checker &&) = delete;
+   sequence_checker &operator = (sequence_checker const &) = delete;
 
-   [[nodiscard]] double calc(uint64_t inSequenceNumber, double inHigh, double inLow, double inClose) noexcept;
-
-   [[maybe_unused, nodiscard]] static constexpr uint32_t lookback_period() noexcept
+   [[maybe_unused, nodiscard]] constexpr bool calc(uint64_t const inSequenceNumber) noexcept
    {
-      return 1u;
+      auto const result{pick(inSequenceNumber),};
+      m_sequenceNumber = inSequenceNumber;
+      return result;
    }
 
-   [[nodiscard]] double pick(uint64_t inSequenceNumber, double inHigh, double inLow, double inClose) const noexcept;
-
-   [[maybe_unused]] void reset() noexcept
+   [[nodiscard]] constexpr bool pick(uint64_t const inSequenceNumber) const noexcept
    {
-      m_close = 0e0;
-#if (not defined(NDEBUG))
-      m_sequenceChecker.reset();
-#endif
+      return (
+         false
+         || ((m_sequenceNumber + 1ull) == inSequenceNumber)
+         || ((0ull == m_sequenceNumber) && (0ull == inSequenceNumber))
+      );
+   }
+
+   [[maybe_unused]] constexpr void reset() noexcept
+   {
+      m_sequenceNumber = 0ull;
    }
 
 private:
-   double m_close{0e0,};
-#if (not defined(NDEBUG))
-   sequence_checker m_sequenceChecker{};
-#endif
-
-   [[nodiscard]] double do_pick(uint64_t inSequenceNumber, double inHigh, double inLow) const noexcept;
+   uint64_t m_sequenceNumber{0ull,};
 };
 
 }

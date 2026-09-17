@@ -45,17 +45,17 @@ namespace tean::tests
 TEST_F(TeAn, AccumulationDistributionOscillator)
 {
    constexpr uint32_t testMinPeriod = 4;
-   constexpr uint32_t testMaxPeriod = 100;
+   constexpr auto testMaxPeriod{100u,};
    auto const testStep = [&] (decimal const &testPriceStep, decimal const &testLotSize)
    {
-      auto const testPricePrecision = inverted_power_of_ten[testPriceStep.scale / 3] * inverted_power_of_ten[testLotSize.scale / 3];
+      auto const testPricePrecision = inverted_power_of_ten[testPriceStep.scale / 3u] * inverted_power_of_ten[testLotSize.scale / 3u];
       auto const testPriceStepValue = static_cast<double>(testPriceStep);
       auto const testLotSizeValue = static_cast<double>(testLotSize);
       for (auto testSlowPeriod = testMinPeriod; testSlowPeriod <= testMaxPeriod; ++testSlowPeriod)
       {
          auto const testFastPeriod = static_cast<uint32_t>(std::sqrt(testSlowPeriod));
          auto const testIterationsNumber = testSlowPeriod * 10;
-         auto const testUnstablePeriod = random_number<uint32_t>(0, testSlowPeriod);
+         auto const testUnstablePeriod = random_number(0u, testSlowPeriod);
          accumulation_distribution_oscillator testIndicator{testFastPeriod, testSlowPeriod, testUnstablePeriod};
          ASSERT_EQ(testSlowPeriod, testIndicator.period());
          auto testHighPrices = std::make_unique<double[]>(testIndicator.lookback_period() + testIterationsNumber);
@@ -67,10 +67,10 @@ TEST_F(TeAn, AccumulationDistributionOscillator)
             tean::accumulation_distribution_line testAdditionalIndicator{};
             for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
             {
-               auto const testClosePrice = testPriceStepValue * random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2]);
-               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
-               auto const testTradedVolume = testLotSizeValue * random_number<int64_t>(10, 100);
+               auto const testClosePrice = testPriceStepValue * random_number(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2u]);
+               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number(0u, 50u);
+               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number(0u, 50u);
+               auto const testTradedVolume = testLotSizeValue * random_number(10u, 100u);
                auto const testAdditionalValue = testAdditionalIndicator.calc(testIteration, testHighPrice, testLowPrice, testClosePrice, testTradedVolume);
                auto testPickAdditionalValue = 0.0;
                auto const testPickValue = testIndicator.pick(testIteration, testHighPrice, testLowPrice, testClosePrice, testTradedVolume, testPickAdditionalValue);
@@ -89,10 +89,10 @@ TEST_F(TeAn, AccumulationDistributionOscillator)
             }
             for (uint32_t testIteration = 0; testIteration < testIterationsNumber; ++testIteration)
             {
-               auto const testClosePrice = testPriceStepValue * random_number<int64_t>(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2]);
-               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
-               auto const testTradedVolume = testLotSizeValue * random_number<int64_t>(10, 100);
+               auto const testClosePrice = testPriceStepValue * random_number(power_of_ten[testPriceStep.scale], power_of_ten[testPriceStep.scale + 2u]);
+               auto const testHighPrice = testClosePrice + testPriceStepValue * random_number(0u, 50u);
+               auto const testLowPrice = testClosePrice - testPriceStepValue * random_number(0u, 50u);
+               auto const testTradedVolume = testLotSizeValue * random_number(10u, 100u);
                auto const testAdditionalValue = testAdditionalIndicator.calc(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice, testTradedVolume);
                auto testPickAdditionalValue = 0.0;
                auto const testPickValue = testIndicator.pick(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testClosePrice, testTradedVolume, testPickAdditionalValue);
@@ -158,13 +158,13 @@ TEST_F(TeAn, AccumulationDistributionOscillator)
                auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period(), testHighPrice, testLowPrice, testClosePrice, testTradedVolume);
                ASSERT_FALSE(std::isnan(testCalcValue));
                ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
-               ASSERT_THAT(expectedValues[0], testing::DoubleNear(testCalcValue, testPricePrecision));
+               ASSERT_THAT(expectedValues[0u], testing::DoubleNear(testCalcValue, testPricePrecision));
             }
          }
       }
    };
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12}, decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 0}));
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00}, decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 6}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 12,}, decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale = 0,}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale =  0,}, decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 6,}));
 }
 
 }

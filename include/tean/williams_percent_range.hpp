@@ -25,6 +25,8 @@
 
 #pragma once
 
+#include "tean/sequence_checker.hpp" ///< for tean::sequence_checker
+
 #include <cstdint> /// for uint32_t, uint64_t
 #include <memory> /// for std::unique_ptr
 #include <utility> /// for std::pair
@@ -32,7 +34,7 @@
 namespace tean
 {
 
-class [[nodiscard]] williams_percent_range final
+class williams_percent_range final
 {
 public:
    williams_percent_range() = delete;
@@ -64,11 +66,11 @@ private:
    uint32_t const m_lookbackPeriod;
    std::unique_ptr<double[]> const m_highValues;
    std::unique_ptr<double[]> const m_lowValues;
+   uint32_t m_highestHighIndex{0u,};
+   uint32_t m_lowestLowIndex{0u,};
 #if (not defined(NDEBUG))
-   uint64_t m_prevSequenceNumber;
+   sequence_checker m_sequenceChecker{};
 #endif
-   uint32_t m_highestHighIndex;
-   uint32_t m_lowestLowIndex;
 
    [[nodiscard]] double do_lookback_calc(uint64_t inSequenceNumber, double inHigh, double inLow, double inClose) noexcept;
 

@@ -55,10 +55,10 @@ TEST_F(TeAn, EaseOfMovement)
       ASSERT_EQ(ti_emv_start(nullptr), static_cast<int>(testIndicator.lookback_period()));
       for (uint32_t testIteration = 0; testIteration < testIndicator.lookback_period(); ++testIteration)
       {
-         auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
-         auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-         auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
-         auto const testTradedVolume = testLotSizeValue * random_number<int64_t>(10, 100);
+         auto const testClosePrice = testPriceStepValue * random_number(100u, 1000u);
+         auto const testHighPrice = testClosePrice + testPriceStepValue * random_number(0u, 50u);
+         auto const testLowPrice = testClosePrice - testPriceStepValue * random_number(0u, 50u);
+         auto const testTradedVolume = testLotSizeValue * random_number(10u, 100u);
          auto const testPickValue = testIndicator.pick(testIteration, testHighPrice, testLowPrice, testTradedVolume);
          ASSERT_TRUE(std::isnan(testPickValue));
          auto const testCalcValue = testIndicator.calc(testIteration, testHighPrice, testLowPrice, testTradedVolume);
@@ -70,10 +70,10 @@ TEST_F(TeAn, EaseOfMovement)
       auto testValues = std::make_unique<testing::Matcher<double>[]>(testIterationsNumber);
       for (uint32_t testIteration = 0; testIteration < testIterationsNumber; ++testIteration)
       {
-         auto const testClosePrice = testPriceStepValue * random_number<int64_t>(100, 1000);
-         auto const testHighPrice = testClosePrice + testPriceStepValue * random_number<int64_t>(0, 50);
-         auto const testLowPrice = testClosePrice - testPriceStepValue * random_number<int64_t>(0, 50);
-         auto const testTradedVolume = testLotSizeValue * random_number<int64_t>(10, 100);
+         auto const testClosePrice = testPriceStepValue * random_number(100u, 1000u);
+         auto const testHighPrice = testClosePrice + testPriceStepValue * random_number(0u, 50u);
+         auto const testLowPrice = testClosePrice - testPriceStepValue * random_number(0u, 50u);
+         auto const testTradedVolume = testLotSizeValue * random_number(10u, 100u);
          auto const testPickValue = testIndicator.pick(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testTradedVolume);
          ASSERT_FALSE(std::isnan(testPickValue));
          auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period() + testIteration, testHighPrice, testLowPrice, testTradedVolume);
@@ -113,12 +113,12 @@ TEST_F(TeAn, EaseOfMovement)
             auto const testCalcValue = testIndicator.calc(testIndicator.lookback_period(), testHighPrice, testLowPrice, testTradedVolume);
             ASSERT_FALSE(std::isnan(testCalcValue));
             ASSERT_DOUBLE_EQ(testPickValue, testCalcValue);
-            ASSERT_DOUBLE_EQ(expectedValues[0], testCalcValue);
+            ASSERT_DOUBLE_EQ(expectedValues[0u], testCalcValue);
          }
       }
    };
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 12}, decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 0}));
-   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6]), .scale = 00}, decimal{.value = static_cast<int64_t>(power_of_ten[0]), .scale = 6}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 12,}, decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale = 0,}));
+   ASSERT_NO_FATAL_FAILURE(testStep(decimal{.value = static_cast<int64_t>(power_of_ten[6u]), .scale =  0,}, decimal{.value = static_cast<int64_t>(power_of_ten[0u]), .scale = 6,}));
 }
 
 }
