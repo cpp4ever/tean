@@ -52,7 +52,6 @@ jobs:
           - compiler: gcc
             cc: gcc-15
             cxx: g++-15
-            standard-libraries: -DCMAKE_CXX_STANDARD_LIBRARIES="-Wl,-ld_classic" # Use classic linker
             packages:
         exclude:
           - compiler: gcc
@@ -96,4 +95,4 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/build
       run: |
-        ctest --build-config ${{matrix.build_type}} --output-on-failure
+        ctest --build-config ${{matrix.build_type}} --no-tests=error --output-on-failure

@@ -92,4 +92,4 @@ jobs:
     - name: Test
       working-directory: ${{runner.workspace}}/build
       run: |
-        ctest --build-config ${{matrix.build_type}} --output-on-failure
+        ctest --build-config ${{matrix.build_type}} --no-tests=error --output-on-failure
