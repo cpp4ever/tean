@@ -26,6 +26,7 @@
 #pragma once
 
 #include <gtest/gtest.h> /// for testing::Test
+#include <ta_libc.h> /// for TA_Initialize, TA_Shutdown
 
 #include <chrono> /// for std::chrono::system_clock
 #include <random> /// for std::mt19937_64, std::uniform_int_distribution, std::uniform_real_distribution
@@ -67,6 +68,12 @@ protected:
    void SetUp() override
    {
       m_randomEngine.seed(std::chrono::system_clock::now().time_since_epoch().count());
+      TA_Initialize();
+   }
+
+   void TearDown() override
+   {
+      TA_Shutdown();
    }
 
 private:

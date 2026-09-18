@@ -72,4 +72,4 @@ if(CXX_LINKER_DIRECTORY_LENGTH GREATER 0)
 endif()
 
 include(GoogleTest)
-gtest_discover_tests(tean_tests PROPERTIES ${TEAN_CTEST_PROPERTIES} DISCOVERY_TIMEOUT 600)
+gtest_discover_tests(tean_tests PROPERTIES ${TEAN_CTEST_PROPERTIES})
