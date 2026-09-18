@@ -36,8 +36,8 @@ FetchContent_Declare(
    EXCLUDE_FROM_ALL
    SYSTEM
    # Download Step Options
-   URL https://github.com/TA-Lib/ta-lib/archive/refs/tags/v0.8.1.tar.gz
-   URL_HASH SHA256=b30f58c24587f5ac46abe7caded1b49c3e1639ca177f4f51079d4fe051a5fae1
+   URL https://github.com/TA-Lib/ta-lib/archive/refs/tags/v0.7.1.tar.gz
+   URL_HASH SHA256=40e7a6978052fe5245771e430e6a4c4553b40038f8ac5a985a1540c4c1fa6ace
    DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 FetchContent_MakeAvailable(talib)
